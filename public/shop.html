@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+    <head>
+        <meta charset="utf-8">
+        <title>Fruitables - Cửa Hàng Nông Sản Hữu Cơ</title>
+        <meta content="width=device-width, initial-scale=1.0" name="viewport">
+        <meta content="" name="keywords">
+        <meta content="" name="description">
+
+        <!-- Google Web Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+
+        <!-- Icon Font Stylesheet -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+        <!-- Libraries Stylesheet -->
+        <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+        <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+        <!-- Customized Bootstrap Stylesheet -->
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Template Stylesheet -->
+        <link href="css/style.css" rel="stylesheet">
+    </head>
+
+    <body>
+
+        <!-- Spinner Start -->
+        <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50 d-flex align-items-center justify-content-center">
+            <div class="spinner-grow text-primary" role="status"></div>
+        </div>
+        <!-- Spinner End -->
+
+        <!-- Navbar start -->
+        <div class="container-fluid fixed-top bg-white shadow-sm py-2">
+            <div class="container px-0">
+                <nav class="navbar navbar-light bg-white navbar-expand-xl py-2">
+                    <!-- Logo -->
+                    <a href="index.html" class="navbar-brand">
+                        <h1 class="text-primary display-6 mb-0 fw-bold">Fruitables</h1>
+                    </a>
+                    
+                    <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                        <span class="fa fa-bars text-primary"></span>
+                    </button>
+                    
+                    <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
+                        <!-- Links Menu chính -->
+                        <div class="navbar-nav mx-auto">
+                            <a href="index.html" class="nav-item nav-link">Trang chủ</a>
+                            <a href="shop.html" class="nav-item nav-link active">Cửa hàng</a>
+                            <a href="shop-detail.html" class="nav-item nav-link">Chi tiết</a>
+                            <a href="cart.html" class="nav-item nav-link">Giỏ hàng</a>
+                            <a href="chackout.html" class="nav-item nav-link">Thanh toán</a>
+                            <a href="recipes.html" class="nav-item nav-link">Món Ngon Mỗi Ngày</a>
+                            <a href="contact.html" class="nav-item nav-link">Liên hệ</a>
+                        </div>
+                        
+                        <!-- Cụm Action Bên Phải -->
+                        <div class="d-flex align-items-center">
+                            <!-- Icon Tìm kiếm -->
+                            <button class="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-3" data-bs-toggle="modal" data-bs-target="#searchModal">
+                                <i class="fas fa-search text-primary"></i>
+                            </button>
+                            
+                            <!-- Icon Giỏ hàng -->
+                            <a href="cart.html" class="position-relative me-4 my-auto" title="Giỏ hàng">
+                                <i class="fa fa-shopping-bag fa-2x text-primary"></i>
+                                <span id="cart-badge-count" class="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1" style="top: -5px; left: 15px; height: 20px; min-width: 20px; font-size: 12px;">0</span>
+                            </a>
+                            
+                            <!-- Khu vực Tài Khoản & Profile Dropdown -->
+                            <div id="user-header-area">
+                                <!-- Nút Đăng nhập (khi chưa đăng nhập) -->
+                                <a href="login.html" id="btn-login-icon" class="btn btn-outline-primary rounded-pill px-3 py-1 fw-bold" title="Đăng nhập">
+                                    <i class="fas fa-user me-1"></i> Đăng nhập
+                                </a>
+                                
+                                <!-- Dropdown Profile (khi đã đăng nhập) -->
+                                <div id="logged-in-info" class="dropdown d-none">
+                                    <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center py-1 px-3" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-user-circle fa-lg text-primary me-2"></i>
+                                        <span id="user-display-name" class="fw-bold text-dark me-1" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">User</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2" aria-labelledby="profileDropdown">
+                                        <li>
+                                            <a class="dropdown-item py-2" href="profile.html">
+                                                <i class="fas fa-id-card text-primary me-2" style="width: 18px;"></i> Hồ sơ cá nhân
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="profile.html#address">
+                                                <i class="fas fa-map-marker-alt text-success me-2" style="width: 18px;"></i> Địa chỉ giao hàng
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item py-2" href="my-orders.html">
+                                                <i class="fas fa-shopping-bag text-warning me-2" style="width: 18px;"></i> Lịch sử đơn hàng
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider my-1"></li>
+                                        <li>
+                                            <button id="btn-logout" class="dropdown-item py-2 text-danger">
+                                                <i class="fas fa-sign-out-alt me-2" style="width: 18px;"></i> Đăng xuất
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <!-- Navbar End -->
+
+        <!-- Modal Search Start -->
+        <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen">
+                <div class="modal-content rounded-0">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Tìm kiếm theo từ khóa</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body d-flex align-items-center">
+                        <form id="modal-search-form" class="input-group w-75 mx-auto d-flex">
+                            <input type="search" id="modal-search-input" class="form-control p-3" placeholder="Nhập tên sản phẩm cần tìm..." aria-describedby="search-icon-1">
+                            <button type="submit" class="input-group-text p-3 border-0 bg-primary text-white"><i class="fa fa-search"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal Search End -->
+
+        <!-- Single Page Header start -->
+        <div class="container-fluid page-header py-5">
+            <h1 class="text-center text-white display-6">Cửa Hàng</h1>
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="index.html">Trang chủ</a></li>
+                <li class="breadcrumb-item active text-white">Cửa hàng</li>
+            </ol>
+        </div>
+        <!-- Single Page Header End -->
+
+        <!-- Fruits Shop Start-->
+        <div class="container-fluid fruite py-5">
+            <div class="container py-5">
+                <h1 class="mb-4">Danh Sách Nông Sản Hữu Cơ</h1>
+                <div class="row g-4">
+                    <div class="col-lg-12">
+                        <!-- Thanh tìm kiếm & Sắp xếp -->
+                        <div class="row g-4 mb-4 align-items-center">
+                            <div class="col-xl-4">
+                                <div class="input-group w-100 mx-auto d-flex">
+                                    <input type="search" id="shop-search-input" class="form-control p-3" placeholder="Nhập từ khóa tìm kiếm...">
+                                    <span class="input-group-text p-3 bg-primary text-white"><i class="fa fa-search"></i></span>
+                                </div>
+                            </div>
+                            <div class="col-xl-4 text-center text-muted">
+                                Hiển thị <strong id="product-count-display" class="text-primary">0</strong> sản phẩm
+                            </div>
+                            <div class="col-xl-4">
+                                <div class="bg-light ps-3 py-2 rounded d-flex align-items-center justify-content-between">
+                                    <label for="sort-select" class="mb-0 fw-bold me-2 text-nowrap">Sắp xếp:</label>
+                                    <select id="sort-select" class="border-0 form-select bg-light">
+                                        <option value="default">Mặc định</option>
+                                        <option value="price-asc">Giá: Thấp đến Cao</option>
+                                        <option value="price-desc">Giá: Cao đến Thấp</option>
+                                        <option value="name-asc">Tên: A - Z</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Sidebar Bên Trái -->
+                            <div class="col-lg-3">
+                                <div class="row g-4">
+                                    <!-- Danh mục -->
+                                    <div class="col-lg-12">
+                                        <div class="mb-4">
+                                            <h4 class="fw-bold mb-3">Danh Mục</h4>
+                                            <ul class="list-unstyled fruite-categorie" id="shop-categories-list">
+                                                <!-- Render danh mục động -->
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Bộ lọc khoảng giá -->
+                                    <div class="col-lg-12">
+                                        <div class="mb-4 bg-light p-3 rounded border">
+                                            <h4 class="fw-bold mb-3">Lọc Theo Giá</h4>
+                                            <input type="range" class="form-range w-100" id="price-range" min="0" max="500000" step="10000" value="500000">
+                                            <div class="d-flex justify-content-between fw-bold text-primary mt-2">
+                                                <span>0 đ</span>
+                                                <span id="price-range-val">500.000 đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sản phẩm mới nổi bật -->
+                                    <div class="col-lg-12">
+                                        <h4 class="fw-bold mb-3">Sản Phẩm Mới</h4>
+                                        <div id="shop-featured-list">
+                                            <!-- Render sản phẩm mới -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Banner quảng cáo Sidebar -->
+                                    <div class="col-lg-12">
+                                        <div class="position-relative">
+                                            <img src="img/banner-fruits.jpg" class="img-fluid w-100 rounded" alt="Banner">
+                                            <div class="position-absolute" style="top: 50%; right: 10px; transform: translateY(-50%);">
+                                                <h3 class="text-secondary fw-bold">Trái Cây <br> Tươi Ngon <br> VietGAP</h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Danh Sách Sản Phẩm Lưới -->
+                            <div class="col-lg-9">
+                                <div class="row g-4" id="shop-products-grid">
+                                    <!-- Render lưới sản phẩm từ CSDL -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fruits Shop End-->
+
+        <!-- Footer Start -->
+        <div class="container-fluid bg-dark text-white-50 footer pt-5 mt-5">
+            <div class="container py-5">
+                <div class="row g-5">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-item">
+                            <h4 class="text-light mb-3">Về Fruitables</h4>
+                            <p class="mb-4">Chuyên cung cấp các sản phẩm rau củ quả, trái cây tươi sạch đạt tiêu chuẩn VietGAP, đảm bảo an toàn sức khỏe cho gia đình bạn.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="d-flex flex-column text-start footer-item">
+                            <h4 class="text-light mb-3">Thông Tin Shop</h4>
+                            <a class="btn-link" href="index.html">Trang chủ</a>
+                            <a class="btn-link" href="shop.html">Cửa hàng</a>
+                            <a class="btn-link" href="cart.html">Giỏ hàng</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="d-flex flex-column text-start footer-item">
+                            <h4 class="text-light mb-3">Liên Hệ</h4>
+                            <p><i class="fas fa-map-marker-alt me-2 text-primary"></i>Hà Nội, Việt Nam</p>
+                            <p><i class="fas fa-envelope me-2 text-primary"></i>contact@fruitables.vn</p>
+                            <p><i class="fas fa-phone me-2 text-primary"></i>0987 654 321</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-item">
+                            <h4 class="text-light mb-3">Thanh Toán</h4>
+                            <img src="img/payment.png" class="img-fluid" alt="Thanh toán">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer End -->
+
+        <!-- Copyright Start -->
+        <div class="container-fluid copyright bg-dark py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        <span class="text-light"><a href="index.html"><i class="fas fa-copyright text-light me-2"></i>Fruitables Store</a> - Bản quyền thuộc về Cửa hàng Nông sản Hữu cơ.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Copyright End -->
+
+        <!-- Back to Top -->
+        <a href="#" class="btn btn-primary border-3 border-primary rounded-circle back-to-top"><i class="fa fa-arrow-up"></i></a>   
+
+        <!-- JavaScript Libraries -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="lib/easing/easing.min.js"></script>
+        <script src="lib/waypoints/waypoints.min.js"></script>
+        <script src="lib/lightbox/js/lightbox.min.js"></script>
+        <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+        <script src="js/main.js"></script>
+
+        <!-- SCRIPT TỰ ĐỘNG XỬ LÝ LOGIC TRANG SHOP -->
+        <script>
+            let allProducts = [];
+            let selectedCategory = 'All';
+
+            document.addEventListener("DOMContentLoaded", function () {
+                checkUserLogin();
+                updateCartBadge();
+                fetchShopProducts();
+
+                // Lắng nghe sự kiện gõ ô tìm kiếm
+                document.getElementById("shop-search-input").addEventListener("input", filterAndRenderProducts);
+                
+                // Lắng nghe chọn sắp xếp
+                document.getElementById("sort-select").addEventListener("change", filterAndRenderProducts);
+
+                // Lắng nghe bộ lọc khoảng giá
+                const priceRange = document.getElementById("price-range");
+                priceRange.addEventListener("input", function() {
+                    document.getElementById("price-range-val").innerText = Number(priceRange.value).toLocaleString('vi-VN') + " đ";
+                    filterAndRenderProducts();
+                });
+
+                // Lắng nghe Modal Search
+                const modalSearchForm = document.getElementById("modal-search-form");
+                if (modalSearchForm) {
+                    modalSearchForm.addEventListener("submit", function(e) {
+                        e.preventDefault();
+                        const key = document.getElementById("modal-search-input").value.trim();
+                        document.getElementById("shop-search-input").value = key;
+                        const modalEl = document.getElementById('searchModal');
+                        if (modalEl) {
+                            const modal = bootstrap.Modal.getInstance(modalEl);
+                            if (modal) modal.hide();
+                        }
+                        filterAndRenderProducts();
+                    });
+                }
+            });
+
+            // 1. Kiểm tra trạng thái Đăng nhập
+            function checkUserLogin() {
+                const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+                const loginIcon = document.getElementById("btn-login-icon");
+                const loggedInInfo = document.getElementById("logged-in-info");
+                const userDisplayName = document.getElementById("user-display-name");
+                const logoutBtn = document.getElementById("btn-logout");
+
+                if (currentUser) {
+                    if (loginIcon) loginIcon.classList.add("d-none");
+                    if (loggedInInfo) {
+                        loggedInInfo.classList.remove("d-none");
+                        loggedInInfo.classList.add("d-flex");
+                    }
+                    if (userDisplayName) {
+                        userDisplayName.innerText = currentUser.ho_ten || currentUser.email;
+                    }
+                }
+
+                if (logoutBtn) {
+                    logoutBtn.addEventListener("click", function () {
+                        if (confirm("Bạn có chắc chắn muốn đăng xuất?")) {
+                            localStorage.removeItem("currentUser");
+                            window.location.href = "index.html";
+                        }
+                    });
+                }
+            }
+
+            // 2. Cập nhật Icon Giỏ hàng
+            function updateCartBadge() {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                let totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                const cartBadge = document.getElementById("cart-badge-count");
+                if (cartBadge) cartBadge.innerText = totalItems;
+            }
+
+            // 3. Tải toàn bộ sản phẩm từ API
+            function fetchShopProducts() {
+                fetch('/api/san-pham')
+                    .then(res => res.json())
+                    .then(products => {
+                        allProducts = products;
+                        
+                        // Cập nhật mức giá max cho Slider Range
+                        if (products.length > 0) {
+                            const maxPrice = Math.max(...products.map(p => Number(p.gia)));
+                            const priceRange = document.getElementById("price-range");
+                            priceRange.max = maxPrice;
+                            priceRange.value = maxPrice;
+                            document.getElementById("price-range-val").innerText = Number(maxPrice).toLocaleString('vi-VN') + " đ";
+                        }
+
+                        renderCategoriesSidebar(products);
+                        renderFeaturedSidebar(products);
+                        filterAndRenderProducts();
+                    })
+                    .catch(err => console.error("Lỗi tải sản phẩm Cửa hàng:", err));
+            }
+
+            // 4. Lọc và Render sản phẩm
+            function filterAndRenderProducts() {
+                const keyword = document.getElementById("shop-search-input").value.trim().toLowerCase();
+                const maxPrice = Number(document.getElementById("price-range").value);
+                const sortType = document.getElementById("sort-select").value;
+
+                let list = allProducts.filter(p => {
+                    const matchCategory = (selectedCategory === 'All') || (p.danh_muc === selectedCategory);
+                    const matchKeyword = (p.ten_san_pham || '').toLowerCase().includes(keyword) || (p.danh_muc || '').toLowerCase().includes(keyword);
+                    const matchPrice = Number(p.gia) <= maxPrice;
+                    return matchCategory && matchKeyword && matchPrice;
+                });
+
+                // Sắp xếp
+                if (sortType === 'price-asc') {
+                    list.sort((a, b) => Number(a.gia) - Number(b.gia));
+                } else if (sortType === 'price-desc') {
+                    list.sort((a, b) => Number(b.gia) - Number(a.gia));
+                } else if (sortType === 'name-asc') {
+                    list.sort((a, b) => a.ten_san_pham.localeCompare(b.ten_san_pham));
+                }
+
+                // Cập nhật số lượng
+                document.getElementById("product-count-display").innerText = list.length;
+
+                // Render Lưới
+                const grid = document.getElementById("shop-products-grid");
+                if (!list || list.length === 0) {
+                    grid.innerHTML = `<div class="col-12 text-center py-5"><p class="text-muted fs-5">Không tìm thấy sản phẩm nào phù hợp.</p></div>`;
+                    return;
+                }
+
+                let html = '';
+                list.forEach(p => {
+                    const isOutOfStock = p.so_luong_ton <= 0;
+                    const actionBtn = isOutOfStock
+                        ? `<button class="btn border border-secondary rounded-pill px-3 text-muted" disabled><i class="fa fa-ban me-1 text-danger"></i>Hết hàng</button>`
+                        : `<button class="btn border border-secondary rounded-pill px-3 text-primary" onclick="addToCart(${p.id}, '${p.ten_san_pham.replace(/'/g, "\\'")}', ${p.gia}, ${p.so_luong_ton}, '${p.hinh_anh}')"><i class="fa fa-shopping-bag me-1 text-primary"></i>Thêm giỏ</button>`;
+
+                    html += `
+                        <div class="col-md-6 col-lg-6 col-xl-4">
+                            <div class="rounded position-relative fruite-item border border-secondary p-3 h-100 d-flex flex-column justify-content-between bg-white">
+                                <div>
+                                    <div class="fruite-img mb-3 text-center position-relative">
+                                        <a href="shop-detail.html?id=${p.id}">
+                                            <img src="img/${p.hinh_anh || 'fruite-item-1.jpg'}" class="img-fluid rounded-top" style="height: 180px; object-fit: contain; cursor: pointer;" alt="${p.ten_san_pham}">
+                                        </a>
+                                        <div class="text-white bg-warning px-3 py-1 rounded-pill position-absolute" style="top: 0px; left: 0px; font-size: 12px; font-weight: 600;">
+                                            ${p.danh_muc || 'Nông sản'}
+                                        </div>
+                                    </div>
+                                    <h4 class="fs-6 fw-bold mb-2 text-start text-truncate">
+                                        <a href="shop-detail.html?id=${p.id}" class="text-dark text-decoration-none" title="${p.ten_san_pham}">${p.ten_san_pham}</a>
+                                    </h4>
+                                    <p class="text-muted small mb-2 text-start product-desc-short">${p.mo_ta || 'Sản phẩm tươi sạch chất lượng cao.'}</p>
+                                    <p class="text-secondary small mb-3 text-start">Còn kho: <strong class="${isOutOfStock ? 'text-danger' : 'text-success'}">${p.so_luong_ton}</strong></p>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center flex-lg-wrap pt-2 border-top">
+                                    <span class="text-dark fs-5 fw-bold mb-0">${Number(p.gia).toLocaleString('vi-VN')} đ</span>
+                                    ${actionBtn}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                grid.innerHTML = html;
+            }
+
+            // 5. Render Danh mục ở Sidebar
+            function renderCategoriesSidebar(products) {
+                const categories = [...new Set(products.map(p => p.danh_muc).filter(Boolean))];
+                const listEl = document.getElementById("shop-categories-list");
+
+                let html = `
+                    <li>
+                        <div class="d-flex justify-content-between fruite-name py-1">
+                            <a href="#" class="${selectedCategory === 'All' ? 'fw-bold text-primary' : 'text-muted'}" onclick="selectCategory('All', event)">
+                                <i class="fas fa-apple-alt me-2 text-primary"></i>Tất cả
+                            </a>
+                            <span class="text-muted">(${products.length})</span>
+                        </div>
+                    </li>
+                `;
+
+                categories.forEach(cat => {
+                    const count = products.filter(p => p.danh_muc === cat).length;
+                    const isSelected = selectedCategory === cat;
+                    html += `
+                        <li>
+                            <div class="d-flex justify-content-between fruite-name py-1">
+                                <a href="#" class="${isSelected ? 'fw-bold text-primary' : 'text-muted'}" onclick="selectCategory('${cat}', event)">
+                                    <i class="fas fa-apple-alt me-2 text-primary"></i>${cat}
+                                </a>
+                                <span class="text-muted">(${count})</span>
+                            </div>
+                        </li>
+                    `;
+                });
+
+                listEl.innerHTML = html;
+            }
+
+            // Chọn danh mục
+            function selectCategory(cat, e) {
+                if (e) e.preventDefault();
+                selectedCategory = cat;
+                renderCategoriesSidebar(allProducts);
+                filterAndRenderProducts();
+            }
+
+            // 6. Render Sản phẩm mới ở Sidebar
+            function renderFeaturedSidebar(products) {
+                const featured = products.slice(0, 3);
+                let html = '';
+                featured.forEach(p => {
+                    html += `
+                        <div class="d-flex align-items-center justify-content-start mb-3 border-bottom pb-2">
+                            <div class="rounded me-3" style="width: 75px; height: 75px;">
+                                <a href="shop-detail.html?id=${p.id}">
+                                    <img src="img/${p.hinh_anh || 'fruite-item-1.jpg'}" class="img-fluid rounded" style="width:75px; height:75px; object-fit:cover;" alt="${p.ten_san_pham}">
+                                </a>
+                            </div>
+                            <div>
+                                <a href="shop-detail.html?id=${p.id}" class="h6 text-dark d-block mb-1 text-truncate" style="max-width: 150px;">${p.ten_san_pham}</a>
+                                <h6 class="fw-bold text-success mb-0">${Number(p.gia).toLocaleString('vi-VN')} đ</h6>
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById("shop-featured-list").innerHTML = html;
+            }
+
+            // 7. Hàm thêm vào giỏ hàng
+            function addToCart(id, name, price, stock, image) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                let item = cart.find(x => x.id === id);
+                let currentQty = item ? item.quantity : 0;
+
+                if (currentQty + 1 > stock) {
+                    alert(`⚠️ Trong kho chỉ còn ${stock} sản phẩm! Bạn không thể mua thêm.`);
+                    return;
+                }
+
+                if (item) {
+                    item.quantity += 1;
+                } else {
+                    cart.push({ id, name, price, quantity: 1, stock, image });
+                }
+
+                localStorage.setItem('cart', JSON.stringify(cart));
+                updateCartBadge();
+                alert(`✅ Đã thêm "${name}" vào giỏ hàng!`);
+            }
+        </script>
+    </body>
+</html>

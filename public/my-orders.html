@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <title>Lịch Sử Đơn Hàng - Fruitables</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <div class="container-fluid fixed-top bg-white shadow-sm py-2">
+        <div class="container px-0">
+            <nav class="navbar navbar-light bg-white navbar-expand-xl py-2">
+                <a href="index.html" class="navbar-brand"><h1 class="text-primary display-6 mb-0 fw-bold">Fruitables</h1></a>
+                <div class="ms-auto d-flex align-items-center">
+                    <a href="profile.html" class="btn btn-outline-secondary rounded-pill px-3 py-1 me-2"><i class="fas fa-user me-1"></i> Tài khoản</a>
+                    <a href="index.html" class="btn btn-primary text-white rounded-pill px-3 py-1"><i class="fas fa-home me-1"></i> Trang chủ</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Nội dung Lịch sử đơn hàng -->
+    <div class="container py-5 mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <h3 class="fw-bold text-primary mb-4"><i class="fas fa-history me-2"></i>Lịch Sử Đơn Hàng Của Bạn</h3>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Mã Đơn</th>
+                                    <th>Người Nhận</th>
+                                    <th>Số Điện Thoại</th>
+                                    <th>Địa Chỉ Giao</th>
+                                    <th>Tổng Tiền</th>
+                                    <th>Ngày Đặt</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="my-orders-body">
+                                <tr><td colspan="8" class="text-center py-4 text-muted">Đang tải lịch sử đơn hàng...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Hiển Thị Chi Tiết Đơn Hàng -->
+        <div class="modal fade" id="orderDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Chi Tiết Đơn Hàng <span id="modal-order-id"></span></h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hình ảnh</th>
+                                        <th>Tên sản phẩm</th>
+                                        <th>Đơn giá</th>
+                                        <th>Số lượng</th>
+                                        <th>Thành tiền</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-order-items">
+                                    <!-- Dữ liệu sản phẩm đổ vào đây -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+            if (!currentUser) {
+                alert("⚠️ Bạn chưa đăng nhập!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            const keyword = currentUser.ho_ten || currentUser.email;
+            fetch(`/api/user/don-hang?keyword=${encodeURIComponent(keyword)}`)
+                .then(res => res.json())
+                .then(orders => {
+                    const tbody = document.getElementById("my-orders-body");
+                    if (!orders || orders.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Bạn chưa có đơn hàng nào.</td></tr>`;
+                        return;
+                    }
+
+                    let html = '';
+                    orders.forEach(o => {
+                        const formattedDate = o.ngay_dat ? new Date(o.ngay_dat).toLocaleString('vi-VN') : 'Vừa xong';
+                        
+                        let badgeColor = 'bg-warning text-dark';
+                        if (o.trang_thai === 'Đang giao') badgeColor = 'bg-info text-dark';
+                        if (o.trang_thai === 'Đã hoàn thành') badgeColor = 'bg-success';
+                        if (o.trang_thai === 'Đã hủy') badgeColor = 'bg-danger';
+
+                        html += `
+                            <tr>
+                                <td class="fw-bold">#DH${o.id}</td>
+                                <td>${o.ten_khach_hang}</td>
+                                <td>${o.so_dien_thoai}</td>
+                                <td>${o.dia_chi}</td>
+                                <td class="text-success fw-bold">${Number(o.tong_tien).toLocaleString('vi-VN')} đ</td>
+                                <td>${formattedDate}</td>
+                                <td><span class="badge ${badgeColor}">${o.trang_thai || 'Chờ xử lý'}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info btn-view-detail" data-id="${o.id}">
+                                        <i class="fas fa-eye"></i> Xem
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+
+                    // GẮN SỰ KIỆN CLICK CHO TẤT CẢ NÚT XEM SAU KHI ĐÃ RENDER XONG
+                    document.querySelectorAll('.btn-view-detail').forEach(button => {
+                        button.addEventListener('click', function () {
+                            const orderId = this.getAttribute('data-id');
+                            viewOrderDetails(orderId);
+                        });
+                    });
+                })
+                .catch(err => console.error("Lỗi tải lịch sử đơn hàng:", err));
+        });
+
+        // Hàm gọi API lấy chi tiết sản phẩm và bật Modal
+        function viewOrderDetails(orderId) {
+            fetch(`/api/don-hang/${orderId}/chi-tiet`)
+                .then(res => res.json())
+                .then(items => {
+                    document.getElementById("modal-order-id").innerText = `#DH${orderId}`;
+                    const tbody = document.getElementById("modal-order-items");
+                    
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Không có thông tin sản phẩm trong đơn hàng này.</td></tr>`;
+                        return;
+                    }
+
+                    let html = '';
+                    items.forEach(item => {
+                        const thanhTien = item.gia * item.so_luong;
+                        html += `
+                            <tr>
+                                <td>
+                                    <img src="img/${item.hinh_anh || 'fruite-item-1.jpg'}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" alt="">
+                                </td>
+                                <td class="fw-bold">${item.ten_san_pham}</td>
+                                <td>${Number(item.gia).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-center">${item.so_luong}</td>
+                                <td class="fw-bold text-success">${thanhTien.toLocaleString('vi-VN')} đ</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+
+                    const modalEl = document.getElementById('orderDetailModal');
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                })
+                .catch(err => {
+                    console.error("Lỗi lấy chi tiết đơn hàng:", err);
+                    alert("❌ Không thể kết nối để lấy chi tiết sản phẩm!");
+                });
+        }
+    </script>
+</body>
+</html>

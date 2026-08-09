@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Quản Trị Admin - Organic Menu</title>
+    <!-- Google Web Fonts & Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #f4f6f9;
+        }
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: #2c3e50;
+            color: #fff;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        .sidebar .brand-title {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            color: #81c408;
+            padding: 20px;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar .nav-link {
+            color: #b8c7ce;
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            border-left: 4px solid transparent;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #fff;
+            background: #1a252f;
+            border-left-color: #81c408;
+        }
+        .sidebar .nav-link i {
+            width: 30px;
+            font-size: 1.2rem;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .card-stat {
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        .bg-organic { background-color: #81c408 !important; }
+        .bg-info-custom { background-color: #17a2b8 !important; }
+        .bg-warning-custom { background-color: #ffc107 !important; color: #333 !important; }
+        .bg-danger-custom { background-color: #dc3545 !important; }
+        .table-custom {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .btn-organic {
+            background-color: #81c408;
+            color: white;
+            font-weight: 600;
+        }
+        .btn-organic:hover { background-color: #5d8e05; color: white; }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar Menu Bên Tái -->
+    <div class="sidebar">
+        <div class="brand-title">
+            <i class="fas fa-leaf me-2"></i>Admin Panel
+        </div>
+        <div class="nav flex-column mt-3" id="admin-tabs" role="tablist">
+            <a class="nav-link active" id="tab-dashboard-link" data-bs-toggle="pill" href="#tab-dashboard">
+                <i class="fas fa-chart-line"></i> Tổng Quan Dashboard
+            </a>
+            <a class="nav-link" id="tab-products-link" data-bs-toggle="pill" href="#tab-products">
+                <i class="fas fa-box-open"></i> Quản Lý Sản Phẩm
+            </a>
+
+            <!-- ĐÃ SỬA: Thay id thành tab-dishes-link, href thành #tab-dishes và đổi icon thành fa-utensils -->
+            <a class="nav-link" id="tab-dishes-link" data-bs-toggle="pill" href="#tab-dishes">
+                <i class="fas fa-utensils"></i> Quản Lý Món Ăn
+            </a>
+
+            <a class="nav-link" id="tab-orders-link" data-bs-toggle="pill" href="#tab-orders">
+                <i class="fas fa-shopping-cart"></i> Quản Lý Đơn Hàng
+            </a>
+            <a class="nav-link" id="tab-users-link" data-bs-toggle="pill" href="#tab-users">
+                <i class="fas fa-users"></i> Quản Lý Tài Khoản
+            </a>
+            <a class="nav-link text-danger mt-5" href="#" id="admin-logout">
+                <i class="fas fa-sign-out-alt"></i> Đăng Xuất Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Nội dung chính Bên Phải -->
+    <div class="main-content">
+        <!-- Header Top -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+            <div>
+                <h3 class="fw-bold m-0" id="page-title">Tổng Quan Hệ Thống</h3>
+                <small class="text-muted">Hệ thống quản lý Organic Menu</small>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="me-3 fw-bold text-success" id="admin-name"><i class="fas fa-user-shield me-1"></i> Admin</span>
+                <a href="index.html" class="btn btn-outline-secondary btn-sm"><i class="fas fa-globe me-1"></i> Xem Web</a>
+            </div>
+        </div>
+
+        <div class="tab-content">
+
+            <!-- 1. TAB DASHBOARD / TỔNG QUAN -->
+            <div class="tab-pane fade show active" id="tab-dashboard">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="card-stat bg-organic d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase m-0">Doanh Thu</h6>
+                                <h3 class="fw-bold my-2" id="stat-revenue">0 đ</h3>
+                                <small>Đơn hàng đã hoàn thành</small>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-stat bg-info-custom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase m-0">Tổng Đơn Hàng</h6>
+                                <h3 class="fw-bold my-2" id="stat-orders">0</h3>
+                                <small>Đơn đặt từ khách hàng</small>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-stat bg-warning-custom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase m-0">Sản Phẩm</h6>
+                                <h3 class="fw-bold my-2" id="stat-products">0</h3>
+                                <small>Món ăn đang kinh doanh</small>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-apple-alt"></i></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card-stat bg-danger-custom d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-uppercase m-0">Tài Khoản</h6>
+                                <h3 class="fw-bold my-2" id="stat-users">0</h3>
+                                <small>Khách hàng & Admin</small>
+                            </div>
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. TAB QUẢN LÝ SẢN PHẨM -->
+            <div class="tab-pane fade" id="tab-products">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0">Danh Sách Thực Phẩm</h5>
+                    <button class="btn btn-organic" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="fas fa-plus me-1"></i> Thêm sản phẩm Mới
+                    </button>
+                </div>
+                <div class="table-custom p-3">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Hình Ảnh</th>
+                                <th>Tên Món Ăn</th>
+                                <th>Danh Mục</th>
+                                <th>Giá Bán</th>
+                                <th>Mô Tả</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="product-list-body">
+                            <!-- Dữ liệu JS tự đổ vào đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- TAB MỚI: QUẢN LÝ MÓN ĂN GỢI Ý -->
+            <div class="tab-pane fade" id="tab-dishes">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold m-0">Danh Sách Món Ăn Gợi Ý</h5>
+                    <button class="btn btn-organic" data-bs-toggle="modal" data-bs-target="#addDishModal">
+                        <i class="fas fa-plus me-1"></i> Thêm Món Ăn Mới
+                    </button>
+                </div>
+                <div class="table-custom p-3">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Hình Ảnh</th>
+                                <th>Tên Món Ăn</th>
+                                <th>Nguyên Liệu Chính</th>
+                                <th>Công Thức Chế Biến</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dish-list-body">
+                            <!-- Dữ liệu món ăn đổ vào đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Thêm món ăn mới -->
+            <div class="modal fade" id="addDishModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title fw-bold"><i class="fas fa-utensils me-2"></i>Thêm Món Ăn Gợi Ý</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addDishForm">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tên món ăn</label>
+                                    <input type="text" id="add-dish-name" class="form-control" placeholder="Súp Bào Ngư Ngô Ngọt" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Phân loại món</label>
+                                    <select id="add-dish-loai" class="form-select" required>
+                                        <option value="Món mặn">Món mặn</option>
+                                        <option value="Canh">Canh</option>
+                                        <option value="Món xào">Món xào</option>
+                                        <option value="Rau">Rau</option>
+                                        <option value="Tráng miệng">Tráng miệng</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nguyên liệu chính</label>
+                                    <input type="text" id="add-dish-ing" class="form-control" placeholder="Bào ngư, Ngô ngọt, Nấm hương" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Công thức chế biến</label>
+                                    <textarea id="add-dish-recipe" class="form-control" rows="3" placeholder="Cách nấu chi tiết..."></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Chọn ảnh món ăn</label>
+                                    <input type="file" id="add-dish-file" class="form-control" accept="image/*" required>
+                                    <div class="mt-2 text-center">
+                                        <img id="add-dish-img-preview" src="#" alt="Xem trước" class="img-thumbnail d-none" style="max-height: 100px;">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100 fw-bold">Lưu Món Ăn Gợi Ý</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 2: SỬA MÓN ĂN -->
+            <div class="modal fade" id="editDishModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="editDishForm">
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Chỉnh Sửa Món Ăn</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" id="edit-dish-id">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tên món ăn</label>
+                                    <input type="text" id="edit-dish-name" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Phân loại món</label>
+                                    <select id="edit-dish-loai" class="form-select" required>
+                                        <option value="Món mặn">Món mặn</option>
+                                        <option value="Canh">Canh</option>
+                                        <option value="Món xào">Món xào</option>
+                                        <option value="Rau">Rau</option>
+                                        <option value="Tráng miệng">Tráng miệng</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nguyên liệu chính</label>
+                                    <input type="text" id="edit-dish-ing" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Công thức / Hướng dẫn</label>
+                                    <textarea id="edit-dish-recipe" class="form-control" rows="3"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Chọn ảnh từ máy tính</label>
+                                    <input type="file" id="sp-file-input" class="form-control" accept="image/*" required>
+                                    <!-- Vùng hiển thị ảnh xem trước -->
+                                    <div class="mt-2 text-center">
+                                        <img id="sp-img-preview" src="#" alt="Xem trước ảnh" class="img-thumbnail d-none" style="max-height: 120px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                <button type="submit" class="btn btn-warning">Cập Nhật</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. TAB QUẢN LÝ ĐƠN HÀNG -->
+            <div class="tab-pane fade" id="tab-orders">
+                <h5 class="fw-bold mb-3">Danh Sách Đơn Hàng Đặt Mua</h5>
+                <div class="table-custom p-3">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Mã Đơn</th>
+                                <th>Khách Hàng</th>
+                                <th>Số Điện Thoại</th>
+                                <th>Địa Chỉ</th>
+                                <th>Tổng Tiền</th>
+                                <th>Ngày Đặt</th>
+                                <th>Trạng Thái</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="order-list-body">
+                            <!-- Dữ liệu đơn hàng JS tự đổ vào đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. TAB QUẢN LÝ TÀI KHOẢN -->
+            <div class="tab-pane fade" id="tab-users">
+                <h5 class="fw-bold mb-3">Tài Khoản Người Dùng</h5>
+                <div class="table-custom p-3">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Họ Và Tên</th>
+                                <th>Email</th>
+                                <th>Vai Trò</th>
+                                <th>Ngày Tạo</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list-body">
+                            <!-- Dữ liệu tài khoản JS tự đổ vào đây -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL THÊM SẢN PHẨM MỚI -->
+    <div class="modal fade" id="addProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-organic text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i>Thêm Sản Phẩm Bán Mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addProductForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            <input type="text" id="add-sp-name" class="form-control" placeholder="Táo Hữu Cơ VietGAP" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Danh mục</label>
+                            <select id="add-sp-category" class="form-select">
+                                <option value="Trái cây">Trái cây</option>
+                                <option value="Rau củ">Rau củ</option>
+                                <option value="Bánh mì">Bánh mì</option>
+                                <option value="Thực phẩm tươi">Thực phẩm tươi</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá bán (VNĐ)</label>
+                                <input type="number" id="add-sp-price" class="form-control" placeholder="85000" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Số lượng tồn kho</label>
+                                <input type="number" id="add-sp-stock" class="form-control" placeholder="50" min="1" value="10" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chọn ảnh từ máy tính</label>
+                            <input type="file" id="add-sp-file" class="form-control" accept="image/*" required>
+                            <div class="mt-2 text-center">
+                                <img id="add-sp-img-preview" src="#" alt="Xem trước" class="img-thumbnail d-none" style="max-height: 100px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả sản phẩm</label>
+                            <textarea id="add-sp-desc" class="form-control" rows="3" placeholder="Mô tả sản phẩm..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 fw-bold">Lưu Sản Phẩm Bán</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL SỬA SẢN PHẨM BÁN -->
+    <div class="modal fade" id="editProductModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Chỉnh Sửa Sản Phẩm Bán</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editProductForm">
+                        <input type="hidden" id="edit-sp-id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên sản phẩm</label>
+                            <input type="text" id="edit-sp-name" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Danh mục</label>
+                            <select id="edit-sp-category" class="form-select">
+                                <option value="Trái cây">Trái cây</option>
+                                <option value="Rau củ">Rau củ</option>
+                                <option value="Bánh mì">Bánh mì</option>
+                                <option value="Thực phẩm tươi">Thực phẩm tươi</option>
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Giá bán (VNĐ)</label>
+                                <input type="number" id="edit-sp-price" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Số lượng tồn kho</label>
+                                <input type="number" id="edit-sp-stock" class="form-control" min="0" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên file ảnh (hoặc chọn ảnh mới từ máy tính)</label>
+                            <input type="text" id="edit-sp-img" class="form-control mb-2" readonly>
+                            <input type="file" id="edit-sp-file" class="form-control" accept="image/*">
+                            <div class="mt-2 text-center">
+                                <img id="edit-sp-img-preview" src="#" alt="Preview" class="img-thumbnail d-none" style="max-height: 100px;">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mô tả sản phẩm</label>
+                            <textarea id="edit-sp-desc" class="form-control" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">Cập Nhật Sản Phẩm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Xem Chi Tiết Đơn Hàng -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Chi Tiết Đơn Hàng <span id="modal-order-id"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hình ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Đơn giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-order-items">
+                                <!-- JS đổ danh sách sản phẩm vào đây -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script Xử Lý Logic Admin -->
+    <!-- Script Xử Lý Logic Admin -->
+    <!-- JavaScript Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script Xử Lý Logic Admin Hoàn Chỉnh -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Tải toàn bộ dữ liệu khi vừa mở trang Admin
+            loadProducts();
+            loadDishes();
+            loadOrders();
+            loadUsers();
+
+            // 1. Xem trước ảnh khi thêm món ăn gợi ý
+            const addFileinput = document.getElementById("add-dish-file");
+            if (addFileinput) {
+                addFileinput.addEventListener("change", function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            const preview = document.getElementById("add-dish-img-preview");
+                            preview.src = event.target.result;
+                            preview.classList.remove("d-none");
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // 2. Xem trước ảnh khi sửa món ăn gợi ý
+            const editFileInput = document.getElementById("sp-file-input");
+            if (editFileInput) {
+                editFileInput.addEventListener("change", function (e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (event) {
+                            const preview = document.getElementById("sp-img-preview");
+                            preview.src = event.target.result;
+                            preview.classList.remove("d-none");
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+
+            // 3. Xử lý Thêm Món Ăn Gợi Ý (Submit Form)
+            const addDishForm = document.getElementById("addDishForm");
+            if (addDishForm) {
+                addDishForm.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    formData.append("ten_mon", document.getElementById("add-dish-name").value);
+                    formData.append("nguyen_lieu_chinh", document.getElementById("add-dish-ing").value);
+                    formData.append("cong_thuc", document.getElementById("add-dish-recipe").value);
+                    formData.append("loai_mon", document.getElementById("add-dish-loai").value);
+                    
+                    const fileInput = document.getElementById("add-dish-file");
+                    if (fileInput.files[0]) {
+                        formData.append("hinh_anh", fileInput.files[0]);
+                    }
+
+                    fetch('/api/admin/them-mon-an', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert("Thêm món ăn thành công!");
+                            location.reload();
+                        } else {
+                            alert("Lỗi: " + result.error);
+                        }
+                    });
+                });
+            }
+
+            // 4. Xử lý Sửa Món Ăn Gợi Ý (Submit Form)
+            const editDishForm = document.getElementById("editDishForm");
+            if (editDishForm) {
+                editDishForm.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    const id = document.getElementById("edit-dish-id").value;
+                    const formData = new FormData();
+                    formData.append("ten_mon", document.getElementById("edit-dish-name").value);
+                    formData.append("nguyen_lieu_chinh", document.getElementById("edit-dish-ing").value);
+                    formData.append("cong_thuc", document.getElementById("edit-dish-recipe").value);
+                    formData.append("loai_mon", document.getElementById("edit-dish-loai").value);
+                    
+                    const fileInput = document.getElementById("sp-file-input");
+                    if (fileInput && fileInput.files[0]) {
+                        formData.append("hinh_anh", fileInput.files[0]);
+                    }
+
+                    fetch(`/api/admin/sua-mon-an/${id}`, {
+                        method: 'PUT',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert("Cập nhật món ăn thành công!");
+                            location.reload();
+                        } else {
+                            alert("Lỗi: " + result.error);
+                        }
+                    });
+                });
+            }
+
+            // 5. Xử lý Thêm Sản Phẩm Bán Mới (Submit Form)
+            const addProductForm = document.getElementById("addProductForm");
+            if (addProductForm) {
+                addProductForm.addEventListener("submit", function (e) {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    formData.append("ten_san_pham", document.getElementById("add-sp-name").value);
+                    formData.append("danh_muc", document.getElementById("add-sp-category").value);
+                    formData.append("gia", document.getElementById("add-sp-price").value);
+                    formData.append("so_luong_ton", document.getElementById("add-sp-stock").value);
+                    formData.append("mo_ta", document.getElementById("add-sp-desc").value);
+
+                    const fileInput = document.getElementById("add-sp-file");
+                    if (fileInput.files[0]) {
+                        formData.append("hinh_anh", fileInput.files[0]);
+                    }
+
+                    fetch('/api/admin/them-san-pham', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert("Thêm sản phẩm bán thành công!");
+                            location.reload();
+                        } else {
+                            alert("Lỗi: " + result.error);
+                        }
+                    });
+                });
+            }
+        });
+
+        // ================= TẢI VÀ RENDER SẢN PHẨM BÁN =================
+        function loadProducts() {
+            fetch('/api/san-pham')
+                .then(res => res.json())
+                .then(products => {
+                    const statEl = document.getElementById("stat-products");
+                    if (statEl) statEl.innerText = products.length;
+
+                    const bodyEl = document.getElementById("product-list-body");
+                    if (!bodyEl) return;
+
+                    if (!products || products.length === 0) {
+                        bodyEl.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Chưa có sản phẩm nào</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    products.forEach(p => {
+                        const isOutOfStock = p.so_luong_ton <= 0;
+                        const stockBadge = isOutOfStock 
+                            ? '<span class="badge bg-danger">Hết hàng</span>' 
+                            : `<span class="badge bg-success">Còn ${p.so_luong_ton}</span>`;
+
+                        const safeName = (p.ten_san_pham || '').replace(/'/g, "\\'");
+                        const safeDesc = (p.mo_ta || '').replace(/'/g, "\\'");
+
+                        html += `
+                            <tr>
+                                <td>${p.id}</td>
+                                <td><img src="img/${p.hinh_anh || 'fruite-item-1.jpg'}" width="50" height="50" class="rounded" style="object-fit:cover;"></td>
+                                <td class="fw-bold">${p.ten_san_pham}</td>
+                                <td><span class="badge bg-secondary">${p.danh_muc || 'Nông sản'}</span></td>
+                                <td class="text-success fw-bold">${Number(p.gia).toLocaleString('vi-VN')} đ</td>
+                                <td>${safeDesc.substring(0, 50)}...</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning me-1" onclick="openEditProductModal(${p.id}, '${safeName}', '${p.danh_muc || 'Trái cây'}', ${p.gia}, ${p.so_luong_ton}, '${p.hinh_anh || ''}', '${safeDesc}')">
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${p.id})">
+                                        <i class="fas fa-trash"></i> Xóa
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    bodyEl.innerHTML = html;
+                })
+                .catch(err => console.error("Lỗi tải sản phẩm:", err));
+        }
+
+        // ================= TẢI VÀ RENDER MÓN ĂN GỢI Ý =================
+        function loadDishes() {
+            fetch('/api/mon-an')
+                .then(res => res.json())
+                .then(dishes => {
+                    const bodyEl = document.getElementById("dish-list-body");
+                    if (!bodyEl) return;
+
+                    if (!dishes || dishes.length === 0) {
+                        bodyEl.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Chưa có món ăn gợi ý nào</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    dishes.forEach(d => {
+                        const safeName = (d.ten_mon || '').replace(/'/g, "\\'");
+                        const safeIng = (d.nguyen_lieu_chinh || '').replace(/'/g, "\\'");
+                        const safeRecipe = (d.cong_thuc || '').replace(/'/g, "\\'").replace(/\n/g, ' ');
+
+                        html += `
+                            <tr>
+                                <td>#${d.id}</td>
+                                <td><img src="img/${d.hinh_anh || 'fruite-item-1.jpg'}" width="50" height="50" class="rounded" style="object-fit:cover;"></td>
+                                <td class="fw-bold">${d.ten_mon}</td>
+                                <td><span class="badge bg-info text-dark">${d.nguyen_lieu_chinh}</span></td>
+                                <td class="text-truncate" style="max-width: 200px;">${d.cong_thuc || ''}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditDishModal(${d.id}, '${safeName}', '${safeIng}', '${safeRecipe}', '${d.loai_mon || 'Món mặn'}', '${d.hinh_anh || ''}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteDish(${d.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    bodyEl.innerHTML = html;
+                })
+                .catch(err => console.error("Lỗi tải món ăn:", err));
+        }
+
+        // ================= XÓA VÀ SỬA SẢN PHẨM BÁN =================
+        function deleteProduct(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này khỏi CSDL?")) {
+                fetch(`/api/admin/xoa-san-pham/${id}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("✅ Đã xóa sản phẩm thành công!");
+                            loadProducts();
+                        }
+                    })
+                    .catch(err => console.error("Lỗi xóa sản phẩm:", err));
+            }
+        }
+
+        function openEditProductModal(id, name, cate, price, stock, img, desc) {
+            document.getElementById("edit-sp-id").value = id;
+            document.getElementById("edit-sp-name").value = name;
+            document.getElementById("edit-sp-category").value = cate;
+            document.getElementById("edit-sp-price").value = price;
+            document.getElementById("edit-sp-stock").value = stock;
+            document.getElementById("edit-sp-img").value = img;
+            document.getElementById("edit-sp-desc").value = desc;
+
+            const editModalEl = document.getElementById('editProductModal');
+            if (editModalEl) {
+                new bootstrap.Modal(editModalEl).show();
+            }
+        }
+
+        // ================= XÓA VÀ SỬA MÓN ĂN GỢI Ý =================
+        function openEditDishModal(id, ten_mon, nguyen_lieu, cong_thuc, loai, hinh_anh) {
+            document.getElementById("edit-dish-id").value = id;
+            document.getElementById("edit-dish-name").value = ten_mon;
+            document.getElementById("edit-dish-ing").value = nguyen_lieu;
+            document.getElementById("edit-dish-recipe").value = cong_thuc;
+            const loaiEl = document.getElementById("edit-dish-loai");
+            if (loaiEl) loaiEl.value = loai || 'Món mặn';
+
+            const modalEl = document.getElementById('editDishModal');
+            if (modalEl) {
+                new bootstrap.Modal(modalEl).show();
+            }
+        }
+
+        function deleteDish(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa món ăn này khỏi hệ thống gợi ý?")) {
+                fetch(`/api/admin/xoa-mon-an/${id}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success) {
+                            alert("✅ Đã xóa món ăn!");
+                            loadDishes();
+                        }
+                    })
+                    .catch(err => console.error("Lỗi xóa món ăn:", err));
+            }
+        }
+
+        // ================= TẢI TÀI KHOẢN VÀ ĐƠN HÀNG =================
+        function loadUsers() {
+            fetch('/api/admin/tai-khoan')
+                .then(res => res.json())
+                .then(users => {
+                    const statEl = document.getElementById("stat-users");
+                    if (statEl) statEl.innerText = users.length;
+
+                    let html = '';
+                    users.forEach(u => {
+                        const isAdmin = u.vai_tro === 'admin';
+                        const badgeRole = isAdmin ? '<span class="badge bg-danger">Quản trị viên</span>' : '<span class="badge bg-success">Khách hàng</span>';
+                        const formattedDate = u.ngay_tao ? new Date(u.ngay_tao).toLocaleDateString('vi-VN') : 'Mới tạo';
+
+                        html += `
+                            <tr>
+                                <td>${u.id}</td>
+                                <td class="fw-bold">${u.ho_ten}</td>
+                                <td>${u.email}</td>
+                                <td>${badgeRole}</td>
+                                <td>${formattedDate}</td>
+                                <td><span class="text-muted"><i class="fas fa-user-check"></i> Hoạt động</span></td>
+                            </tr>
+                        `;
+                    });
+                    const bodyEl = document.getElementById("user-list-body");
+                    if (bodyEl) bodyEl.innerHTML = html;
+                })
+                .catch(err => console.error("Lỗi tải tài khoản:", err));
+        }
+
+        function loadOrders() {
+            fetch('/api/admin/don-hang')
+                .then(res => res.json())
+                .then(orders => {
+                    const statEl = document.getElementById("stat-orders");
+                    if (statEl) statEl.innerText = orders.length;
+
+                    let totalRevenue = 0;
+                    let html = '';
+
+                    if (!orders || orders.length === 0) {
+                        html = '<tr><td colspan="8" class="text-center text-muted py-4">Chưa có đơn hàng nào</td></tr>';
+                    } else {
+                        orders.forEach(o => {
+                            if (o.trang_thai === 'Đã hoàn thành') {
+                                totalRevenue += Number(o.tong_tien || 0);
+                            }
+
+                            const formattedDate = o.ngay_dat ? new Date(o.ngay_dat).toLocaleString('vi-VN') : 'Vừa xong';
+                            const statuses = ['Chờ xử lý', 'Đang giao', 'Đã hoàn thành', 'Đã hủy'];
+                            let statusOptions = '';
+                            statuses.forEach(st => {
+                                const selected = o.trang_thai === st ? 'selected' : '';
+                                statusOptions += `<option value="${st}" ${selected}>${st}</option>`;
+                            });
+
+                            html += `
+                                <tr>
+                                    <td class="fw-bold">#DH${o.id}</td>
+                                    <td class="fw-bold">${o.ten_khach_hang || 'Khách vãng lai'}</td>
+                                    <td>${o.so_dien_thoai || 'Chưa có'}</td>
+                                    <td style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${o.dia_chi}">${o.dia_chi || 'Chưa có'}</td>
+                                    <td class="text-success fw-bold">${Number(o.tong_tien || 0).toLocaleString('vi-VN')} đ</td>
+                                    <td>${formattedDate}</td>
+                                    <td>
+                                        <select class="form-select form-select-sm fw-bold text-primary" onchange="updateOrderStatus(${o.id}, this.value)">
+                                            ${statusOptions}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewOrderDetails(${o.id})">
+                                            <i class="fas fa-eye"></i> Xem
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    const revEl = document.getElementById("stat-revenue");
+                    if (revEl) revEl.innerText = totalRevenue.toLocaleString('vi-VN') + ' đ';
+
+                    const bodyEl = document.getElementById("order-list-body");
+                    if (bodyEl) bodyEl.innerHTML = html;
+                })
+                .catch(err => console.error("Lỗi tải đơn hàng:", err));
+        }
+
+        function updateOrderStatus(id, newStatus) {
+            fetch(`/api/admin/don-hang/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trang_thai: newStatus })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert(`Đã chuyển trạng thái đơn hàng #DH${id} thành "${newStatus}"!`);
+                    loadOrders();
+                } else {
+                    alert("Lỗi cập nhật trạng thái!");
+                }
+            });
+        }
+
+        function viewOrderDetails(orderId) {
+            fetch(`/api/don-hang/${orderId}/chi-tiet`)
+                .then(res => res.json())
+                .then(items => {
+                    document.getElementById("modal-order-id").innerText = `#DH${orderId}`;
+                    const tbody = document.getElementById("modal-order-items");
+                    
+                    if (!items || items.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Không có thông tin sản phẩm.</td></tr>`;
+                        return;
+                    }
+
+                    let html = '';
+                    items.forEach(item => {
+                        const thanhTien = item.gia * item.so_luong;
+                        html += `
+                            <tr>
+                                <td><img src="img/${item.hinh_anh || 'fruite-item-1.jpg'}" class="rounded" style="width: 50px; height: 50px; object-fit: cover;" alt=""></td>
+                                <td class="fw-bold">${item.ten_san_pham}</td>
+                                <td>${Number(item.gia).toLocaleString('vi-VN')} đ</td>
+                                <td class="text-center">${item.so_luong}</td>
+                                <td class="fw-bold text-success">${thanhTien.toLocaleString('vi-VN')} đ</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+                });
+        }
+    </script>
+</body>
+
+</html>

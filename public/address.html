@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <title>Quản Lý Địa Chỉ Giao Hàng - Fruitables</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+</head>
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <div class="container-fluid fixed-top bg-white shadow-sm py-2">
+        <div class="container px-0">
+            <nav class="navbar navbar-light bg-white navbar-expand-xl py-2">
+                <a href="index.html" class="navbar-brand"><h1 class="text-primary display-6 mb-0 fw-bold">Fruitables</h1></a>
+                <div class="ms-auto d-flex align-items-center">
+                    <a href="profile.html" class="btn btn-outline-secondary rounded-pill px-3 py-1 me-2"><i class="fas fa-user me-1"></i> Hồ sơ cá nhân</a>
+                    <a href="checkout.html" class="btn btn-primary text-white rounded-pill px-3 py-1"><i class="fas fa-shopping-bag me-1"></i> Thanh toán</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Nội dung chính -->
+    <div class="container py-5 mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="bg-white p-4 rounded shadow-sm border">
+                    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+                        <h4 class="fw-bold mb-0 text-primary"><i class="fas fa-map-marker-alt me-2"></i>Sổ Địa Chỉ Giao Hàng Của Tôi</h4>
+                        <button class="btn btn-success text-white rounded-pill btn-sm fw-bold px-3" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            <i class="fas fa-plus me-1"></i> Thêm Địa Chỉ Mới
+                        </button>
+                    </div>
+
+                    <!-- Danh sách địa chỉ thực tế từ CSDL -->
+                    <div id="address-list-container">
+                        <p class="text-center text-muted py-4">Đang tải danh sách địa chỉ...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM ĐỊA CHỈ MỚI -->
+    <div class="modal fade" id="addAddressModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Thêm Địa Chỉ Giao Hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-add-address">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên người nhận *</label>
+                            <input type="text" id="addr-name" class="form-control" required placeholder="Ví dụ: Nguyễn Văn A">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Số điện thoại nhận hàng *</label>
+                            <input type="tel" id="addr-phone" class="form-control" required placeholder="Nhập số điện thoại...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Địa chỉ chi tiết *</label>
+                            <textarea id="addr-detail" class="form-control" rows="3" required placeholder="Số nhà, đường, phường/xã, quận/huyện..."></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="addr-default">
+                            <label class="form-check-label fw-bold" for="addr-default">Đặt làm địa chỉ mặc định</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 text-white fw-bold">Lưu Địa Chỉ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (!currentUser) {
+                alert("⚠️ Bạn chưa đăng nhập!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            loadUserAddresses();
+
+            // Gửi dữ liệu thêm địa chỉ lên Backend MySQL
+            document.getElementById("form-add-address").addEventListener("submit", function (e) {
+                e.preventDefault();
+                const newAddr = {
+                    user_id: currentUser.id,
+                    ho_ten: document.getElementById("addr-name").value.trim(),
+                    sdt: document.getElementById("addr-phone").value.trim(),
+                    dia_chi: document.getElementById("addr-detail").value.trim(),
+                    mac_dinh: document.getElementById("addr-default").checked ? 1 : 0
+                };
+
+                fetch('/api/user/dia-chi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newAddr)
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        alert("✅ Thêm địa chỉ mới thành công!");
+                        bootstrap.Modal.getInstance(document.getElementById('addAddressModal')).hide();
+                        document.getElementById("form-add-address").reset();
+                        loadUserAddresses(); // Tải lại danh sách ngay lập tức
+                    } else {
+                        alert("❌ Lỗi: " + res.error);
+                    }
+                })
+                .catch(err => console.error("Lỗi kết nối API:", err));
+            });
+        });
+
+        // Tải danh sách địa chỉ từ Backend
+        function loadUserAddresses() {
+            fetch(`/api/user/dia-chi/${currentUser.id}`)
+                .then(res => res.json())
+                .then(list => {
+                    const container = document.getElementById("address-list-container");
+                    if (!list || list.length === 0) {
+                        container.innerHTML = `<p class="text-muted text-center py-4">Bạn chưa lưu địa chỉ giao hàng nào.</p>`;
+                        return;
+                    }
+
+                    let html = '';
+                    list.forEach(a => {
+                        const defaultTag = a.mac_dinh ? `<span class="badge bg-success ms-2">Mặc định</span>` : '';
+                        html += `
+                            <div class="border rounded p-3 mb-3 d-flex justify-content-between align-items-center bg-light">
+                                <div>
+                                    <h6 class="fw-bold mb-1">${a.ho_ten} - ${a.sdt} ${defaultTag}</h6>
+                                    <p class="mb-0 text-secondary small">${a.dia_chi}</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAddress(${a.id})">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                });
+        }
+
+        function deleteAddress(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) {
+                fetch(`/api/user/dia-chi/${id}`, { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(res => loadUserAddresses());
+            }
+        }
+    </script>
+</body>
+</html>

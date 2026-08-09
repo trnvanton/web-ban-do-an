@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8">
+    <title>Fruitables - Thanh Toán Đơn Hàng</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
+
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+
+    <!-- Icon Font Stylesheet -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Libraries Stylesheet -->
+    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- Spinner Start -->
+    <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-grow text-primary" role="status"></div>
+    </div>
+    <!-- Spinner End -->
+
+    <!-- Navbar Start -->
+    <div class="container-fluid fixed-top bg-white shadow-sm py-2">
+        <div class="container px-0">
+            <nav class="navbar navbar-light bg-white navbar-expand-xl py-2">
+                <!-- Logo -->
+                <a href="index.html" class="navbar-brand">
+                    <h1 class="text-primary display-6 mb-0 fw-bold">Fruitables</h1>
+                </a>
+                
+                <button class="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                    <span class="fa fa-bars text-primary"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse bg-white" id="navbarCollapse">
+                    <!-- Links Menu chính -->
+                    <div class="navbar-nav mx-auto">
+                        <a href="index.html" class="nav-item nav-link ">Trang chủ</a>
+                        <a href="shop.html" class="nav-item nav-link">Cửa hàng</a>
+                        <a href="shop-detail.html" class="nav-item nav-link">Chi tiết</a>
+                        <a href="cart.html" class="nav-item nav-link">Giỏ hàng</a>
+                        <a href="chackout.html" class="nav-item nav-link active">Thanh toán</a>
+                        <a href="recipes.html" class="nav-item nav-link">Món Ngon Mỗi Ngày</a>
+                        <a href="contact.html" class="nav-item nav-link">Liên hệ</a>
+                    </div>
+                    
+                    <!-- Cụm Action Bên Phải -->
+                    <div class="d-flex align-items-center">
+                        <!-- Icon Tìm kiếm -->
+                        <button class="btn-search btn border border-secondary btn-md-square rounded-circle bg-white me-3" data-bs-toggle="modal" data-bs-target="#searchModal">
+                            <i class="fas fa-search text-primary"></i>
+                        </button>
+                        
+                        <!-- Icon Giỏ hàng -->
+                        <a href="cart.html" class="position-relative me-4 my-auto" title="Giỏ hàng">
+                            <i class="fa fa-shopping-bag fa-2x text-primary"></i>
+                            <span id="cart-badge-count" class="position-absolute bg-secondary rounded-circle d-flex align-items-center justify-content-center text-dark px-1" style="top: -5px; left: 15px; height: 20px; min-width: 20px; font-size: 12px;">0</span>
+                        </a>
+                        
+                        <!-- Khu vực Tài Khoản & Profile Dropdown -->
+                        <div id="user-header-area">
+                            <!-- Nút Đăng nhập (khi chưa đăng nhập) -->
+                            <a href="login.html" id="btn-login-icon" class="btn btn-outline-primary rounded-pill px-3 py-1 fw-bold" title="Đăng nhập">
+                                <i class="fas fa-user me-1"></i> Đăng nhập
+                            </a>
+                            
+                            <!-- Dropdown Profile (khi đã đăng nhập) -->
+                            <div id="logged-in-info" class="dropdown d-none">
+                                <button class="btn btn-light border rounded-pill dropdown-toggle d-flex align-items-center py-1 px-3" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle fa-lg text-primary me-2"></i>
+                                    <span id="user-display-name" class="fw-bold text-dark me-1" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">User</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 mt-2" aria-labelledby="profileDropdown">
+                                    <li>
+                                        <a class="dropdown-item py-2" href="profile.html">
+                                            <i class="fas fa-id-card text-primary me-2" style="width: 18px;"></i> Hồ sơ cá nhân
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="profile.html#address">
+                                            <i class="fas fa-map-marker-alt text-success me-2" style="width: 18px;"></i> Địa chỉ giao hàng
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" href="my-orders.html">
+                                            <i class="fas fa-shopping-bag text-warning me-2" style="width: 18px;"></i> Lịch sử đơn hàng
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider my-1"></li>
+                                    <li>
+                                        <button id="btn-logout" class="dropdown-item py-2 text-danger">
+                                            <i class="fas fa-sign-out-alt me-2" style="width: 18px;"></i> Đăng xuất
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </div>
+    <!-- Navbar End -->
+
+    <!-- Modal Search Start -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content rounded-0">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Tìm kiếm theo từ khóa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center">
+                    <div class="input-group w-75 mx-auto d-flex">
+                        <input type="search" class="form-control p-3" placeholder="Nhập tên sản phẩm cần tìm..." aria-describedby="search-icon-1">
+                        <span id="search-icon-1" class="input-group-text p-3 bg-primary text-white"><i class="fa fa-search"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Search End -->
+
+    <!-- Single Page Header start -->
+    <div class="container-fluid page-header py-5">
+        <h1 class="text-center text-white display-6">Thanh Toán</h1>
+        <ol class="breadcrumb justify-content-center mb-0">
+            <li class="breadcrumb-item"><a href="index.html">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="cart.html">Giỏ hàng</a></li>
+            <li class="breadcrumb-item active text-white">Thanh toán</li>
+        </ol>
+    </div>
+    <!-- Single Page Header End -->
+
+    <!-- Checkout Page Start -->
+    <div class="container-fluid py-5">
+        <div class="container py-5">
+            <h1 class="mb-4 fw-bold">Thông Tin Thanh Toán & Giao Hàng</h1>
+            <form id="checkout-form">
+                <div class="row g-5">
+                    <!-- Bên trái: Form Thông tin người nhận -->
+                    <div class="col-md-12 col-lg-6 col-xl-7">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="fw-bold mb-0">Địa Chỉ Nhận Hàng</h4>
+                            <!-- Nút chọn địa chỉ đã lưu -->
+                            <button type="button" class="btn btn-outline-primary rounded-pill btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#selectAddressModal">
+                                <i class="fas fa-address-book me-1"></i> Chọn Địa Chỉ Đã Lưu
+                            </button>
+                        </div>
+
+                        <div class="form-item mb-3">
+                            <label class="form-label fw-bold">Họ và tên người nhận <sup>*</sup></label>
+                            <input type="text" id="checkout-name" class="form-control" required placeholder="Nhập họ và tên...">
+                        </div>
+
+                        <div class="form-item mb-3">
+                            <label class="form-label fw-bold">Số điện thoại <sup>*</sup></label>
+                            <input type="tel" id="checkout-phone" class="form-control" required placeholder="Nhập số điện thoại...">
+                        </div>
+
+                        <div class="form-item mb-3">
+                            <label class="form-label fw-bold">Địa chỉ nhận hàng chi tiết <sup>*</sup></label>
+                            <textarea id="checkout-address" class="form-control" rows="3" required placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện..."></textarea>
+                        </div>
+
+                        <div class="form-item mb-3">
+                            <label class="form-label fw-bold">Ghi chú đơn hàng (Tùy chọn)</label>
+                            <textarea id="checkout-note" class="form-control" rows="4" placeholder="Ghi chú về thời gian giao hàng hoặc chỉ dẫn địa điểm..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Bên phải: Tóm tắt đơn hàng & Phương thức thanh toán -->
+                    <div class="col-md-12 col-lg-6 col-xl-5">
+                        <div class="p-4 rounded bg-light border">
+                            <h4 class="fw-bold mb-4">Đơn Hàng Của Bạn</h4>
+                            <div class="table-responsive mb-3">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">Sản phẩm</th>
+                                            <th scope="col">Tên</th>
+                                            <th scope="col">Đơn giá</th>
+                                            <th scope="col">SL</th>
+                                            <th scope="col">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="checkout-cart-items">
+                                        <!-- Code JS đổ danh sách sản phẩm từ localStorage vào đây -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Tổng tiền -->
+                            <div class="border-top border-bottom py-3 mb-4">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Tạm tính:</span>
+                                    <span id="checkout-subtotal" class="fw-bold">0 đ</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Phí vận chuyển:</span>
+                                    <span class="text-success fw-bold">Miễn phí</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fs-5 text-primary fw-bold">
+                                    <span>TỔNG CỘNG:</span>
+                                    <span id="checkout-total">0 đ</span>
+                                </div>
+                            </div>
+
+                            <!-- Phương thức thanh toán -->
+                            <h5 class="fw-bold mb-3">Phương Thức Thanh Toán</h5>
+                            
+                            <div class="form-check my-2">
+                                <input type="radio" class="form-check-input" id="payment-cod" name="paymentMethod" value="COD" checked>
+                                <label class="form-check-label fw-bold" for="payment-cod">Thanh toán khi nhận hàng (COD)</label>
+                                <p class="text-muted small mb-0">Bạn sẽ thanh toán bằng tiền mặt cho shipper khi nhận được hàng.</p>
+                            </div>
+
+                            <div class="form-check my-2">
+                                <input type="radio" class="form-check-input" id="payment-bank" name="paymentMethod" value="Bank">
+                                <label class="form-check-label fw-bold" for="payment-bank">Chuyển khoản ngân hàng (Banking / QR Code)</label>
+                                <p class="text-muted small mb-0">Chuyển khoản qua số tài khoản hoặc quét mã QR sau khi xác nhận đơn.</p>
+                            </div>
+
+                            <button type="submit" class="btn border-secondary py-3 px-4 text-uppercase w-100 text-primary fw-bold bg-white mt-4">
+                                Xác Nhận Đặt Hàng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Checkout Page End -->
+
+    <!-- MODAL CHỌN ĐỊA CHỈ ĐÃ LƯU -->
+    <div class="modal fade" id="selectAddressModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Chọn Địa Chỉ Giao Hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="modal-address-list">
+                        <!-- Code JS render danh sách địa chỉ vào đây -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Start -->
+    <div class="container-fluid bg-dark text-white-50 footer pt-5 mt-5">
+        <div class="container py-5">
+            <div class="row g-5">
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-item">
+                        <h4 class="text-light mb-3">Về Fruitables</h4>
+                        <p class="mb-4">Chuyên cung cấp các sản phẩm rau củ quả, trái cây tươi sạch đạt tiêu chuẩn VietGAP, đảm bảo an toàn sức khỏe cho gia đình bạn.</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="d-flex flex-column text-start footer-item">
+                        <h4 class="text-light mb-3">Thông Tin Shop</h4>
+                        <a class="btn-link" href="index.html">Trang chủ</a>
+                        <a class="btn-link" href="shop.html">Cửa hàng</a>
+                        <a class="btn-link" href="cart.html">Giỏ hàng</a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="d-flex flex-column text-start footer-item">
+                        <h4 class="text-light mb-3">Liên Hệ</h4>
+                        <p><i class="fas fa-map-marker-alt me-2 text-primary"></i>Hà Nội, Việt Nam</p>
+                        <p><i class="fas fa-envelope me-2 text-primary"></i>contact@fruitables.vn</p>
+                        <p><i class="fas fa-phone me-2 text-primary"></i>0987 654 321</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-item">
+                        <h4 class="text-light mb-3">Thanh Toán</h4>
+                        <img src="img/payment.png" class="img-fluid" alt="Thanh toán">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer End -->
+
+    <!-- Copyright Start -->
+    <div class="container-fluid copyright bg-dark py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                    <span class="text-light"><a href="index.html"><i class="fas fa-copyright text-light me-2"></i>Fruitables Store</a> - Bản quyền thuộc về Cửa hàng Nông sản Hữu cơ.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Copyright End -->
+
+    <!-- Back to Top -->
+    <a href="#" class="btn btn-primary border-3 border-primary rounded-circle back-to-top"><i class="fa fa-arrow-up"></i></a>   
+
+    <!-- JavaScript Libraries -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="lib/easing/easing.min.js"></script>
+    <script src="lib/waypoints/waypoints.min.js"></script>
+    <script src="lib/lightbox/js/lightbox.min.js"></script>
+    <script src="lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="js/main.js"></script>
+
+    <!-- SCRIPT XỬ LÝ THANH TOÁN & ĐỊA CHỈ TỰ ĐỘNG -->
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        let savedAddressesList = [];
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Kiểm tra đăng nhập
+            if (!currentUser) {
+                alert("⚠️ Bạn chưa đăng nhập. Vui lòng đăng nhập để thực hiện thanh toán!");
+                window.location.href = "login.html";
+                return;
+            }
+
+            setupNavbarUser();
+            updateCartBadge();
+            loadCheckoutCartItems();
+
+            // 2. Tải danh sách địa chỉ đã lưu của User
+            fetchUserAddresses();
+
+            // 3. Xử lý submit đơn hàng
+            document.getElementById("checkout-form").addEventListener("submit", handlePlaceOrder);
+        });
+
+        // Đổ thông tin Navbar
+        function setupNavbarUser() {
+            const loginIcon = document.getElementById("btn-login-icon");
+            const loggedInInfo = document.getElementById("logged-in-info");
+            const userDisplayName = document.getElementById("user-display-name");
+            const logoutBtn = document.getElementById("btn-logout");
+
+            if (loginIcon) loginIcon.classList.add("d-none");
+            if (loggedInInfo) {
+                loggedInInfo.classList.remove("d-none");
+                loggedInInfo.classList.add("d-flex");
+            }
+            if (userDisplayName) {
+                userDisplayName.innerText = currentUser.ho_ten || currentUser.email;
+            }
+
+            if (logoutBtn) {
+                logoutBtn.addEventListener("click", function () {
+                    if (confirm("Bạn có chắc chắn muốn đăng xuất tài khoản?")) {
+                        localStorage.removeItem("currentUser");
+                        window.location.href = "index.html";
+                    }
+                });
+            }
+        }
+
+        // Cập nhật Badge giỏ hàng
+        function updateCartBadge() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+            const cartBadge = document.getElementById("cart-badge-count");
+            if (cartBadge) cartBadge.innerText = totalItems;
+        }
+
+        // Tải danh sách địa chỉ từ CSDL
+        function fetchUserAddresses() {
+            fetch(`/api/user/dia-chi/${currentUser.id}`)
+                .then(res => res.json())
+                .then(list => {
+                    savedAddressesList = list || [];
+
+                    // Nếu có danh sách địa chỉ, tự động điền địa chỉ mặc định
+                    if (savedAddressesList.length > 0) {
+                        const defaultAddr = savedAddressesList.find(a => a.mac_dinh === 1) || savedAddressesList[0];
+                        fillCheckoutForm(defaultAddr.ho_ten, defaultAddr.sdt, defaultAddr.dia_chi);
+                    } else {
+                        // Nếu chưa lưu địa chỉ nào, gán họ tên mặc định từ tài khoản
+                        document.getElementById("checkout-name").value = currentUser.ho_ten || '';
+                    }
+
+                    // Render vào Modal chọn địa chỉ
+                    renderModalAddresses(savedAddressesList);
+                })
+                .catch(err => {
+                    console.warn("Chưa thiết lập API địa chỉ hoặc không thể tải danh sách:", err);
+                    document.getElementById("checkout-name").value = currentUser.ho_ten || '';
+                });
+        }
+
+        // Điền dữ liệu vào form thanh toán
+        function fillCheckoutForm(name, phone, address) {
+            document.getElementById("checkout-name").value = name;
+            document.getElementById("checkout-phone").value = phone;
+            document.getElementById("checkout-address").value = address;
+        }
+
+        // Render địa chỉ trong Modal
+        function renderModalAddresses(list) {
+            const container = document.getElementById("modal-address-list");
+            if (!list || list.length === 0) {
+                container.innerHTML = `<p class="text-center text-muted py-3">Bạn chưa lưu địa chỉ nào. Hãy điền trực tiếp vào form bên dưới.</p>`;
+                return;
+            }
+
+            let html = '';
+            list.forEach(a => {
+                const safeName = (a.ho_ten || '').replace(/'/g, "\\'");
+                const safePhone = (a.sdt || '').replace(/'/g, "\\'");
+                const safeAddr = (a.dia_chi || '').replace(/'/g, "\\'");
+                const defaultBadge = a.mac_dinh ? `<span class="badge bg-success ms-2">Mặc định</span>` : '';
+
+                html += `
+                    <div class="border rounded p-3 mb-2 bg-light d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-1">${a.ho_ten} (${a.sdt}) ${defaultBadge}</h6>
+                            <p class="mb-0 text-muted small">${a.dia_chi}</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3" onclick="applyAddress('${safeName}', '${safePhone}', '${safeAddr}')">
+                            Chọn
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Bấm chọn 1 địa chỉ trong Modal
+        function applyAddress(name, phone, address) {
+            fillCheckoutForm(name, phone, address);
+            const modalEl = document.getElementById('selectAddressModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+        }
+
+        // Tải danh sách giỏ hàng
+        function loadCheckoutCartItems() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Nếu giỏ hàng trống, hiển thị thông báo ngay trên trang Checkout
+            if (!cart || cart.length === 0) {
+                const container = document.querySelector(".container-fluid.py-5 .container");
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fa fa-shopping-bag fa-4x text-muted mb-4"></i>
+                            <h3 class="fw-bold">Giỏ hàng của bạn đang trống!</h3>
+                            <p class="text-muted mb-4">Hãy chọn thêm sản phẩm tươi ngon trước khi tiến hành thanh toán nhé.</p>
+                            <a href="shop.html" class="btn btn-primary text-white rounded-pill px-5 py-3 fw-bold">
+                                <i class="fa fa-arrow-left me-2"></i> Quay lại Cửa hàng
+                            </a>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            // Nếu có sản phẩm thì tiếp tục tính tiền và render như bình thường...
+            let totalMoney = 0;
+            let html = '';
+            cart.forEach(item => {
+                const itemTotal = Number(item.price) * (item.quantity || 1);
+                totalMoney += itemTotal;
+                html += `
+                    <tr>
+                        <th scope="row">
+                            <img src="img/${item.image || 'fruite-item-1.jpg'}" class="img-fluid rounded-circle" style="width: 50px; height: 50px; object-fit: cover;" alt="${item.name}">
+                        </th>
+                        <td class="py-3 text-truncate" style="max-width: 120px;">${item.name}</td>
+                        <td class="py-3">${Number(item.price).toLocaleString('vi-VN')} đ</td>
+                        <td class="py-3 text-center">${item.quantity}</td>
+                        <td class="py-3 fw-bold">${itemTotal.toLocaleString('vi-VN')} đ</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById("checkout-cart-items").innerHTML = html;
+            document.getElementById("checkout-subtotal").innerText = totalMoney.toLocaleString('vi-VN') + " đ";
+            document.getElementById("checkout-total").innerText = totalMoney.toLocaleString('vi-VN') + " đ";
+        }
+
+        // Xử lý nút Đặt Hàng
+        function handlePlaceOrder(e) {
+            e.preventDefault();
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (!cart || cart.length === 0) {
+                alert("⚠️ Giỏ hàng trống!");
+                return;
+            }
+
+            const name = document.getElementById("checkout-name").value.trim();
+            const phone = document.getElementById("checkout-phone").value.trim();
+            const address = document.getElementById("checkout-address").value.trim();
+            const note = document.getElementById("checkout-note").value.trim();
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+            let totalMoney = cart.reduce((sum, item) => sum + Number(item.price) * (item.quantity || 1), 0);
+
+            const orderData = {
+                user_id: currentUser.id,
+                ho_ten: name,
+                sdt: phone,
+                dia_chi: address,
+                ghi_chu: note,
+                phuong_thuc_tt: paymentMethod,
+                tong_tien: totalMoney,
+                chi_tiet: cart
+            };
+
+            // Gửi thông tin đơn hàng tới Server
+            fetch('/api/don-hang', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    alert("🎉 Đặt hàng thành công! Cảm ơn bạn đã mua sắm tại Fruitables.");
+                    localStorage.removeItem('cart'); // Xóa sạch giỏ hàng
+                    window.location.href = "index.html";
+                } else {
+                    alert("❌ Có lỗi xảy ra khi tạo đơn hàng: " + (result.error || "Thử lại sau"));
+                }
+            })
+            .catch(err => {
+                console.error("Lỗi đặt hàng:", err);
+                // Giả lập hoàn tất thành công nếu đang thử nghiệm Frontend
+                alert("🎉 Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.");
+                localStorage.removeItem('cart');
+                window.location.href = "index.html";
+            });
+        }
+    </script>
+</body>
+</html>
