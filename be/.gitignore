@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Cấu hình môi trường (chứa mật khẩu DB, khóa JWT)
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Hệ điều hành
+.DS_Store
+Thumbs.db
+
+data/
