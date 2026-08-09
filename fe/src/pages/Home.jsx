@@ -178,12 +178,13 @@ export default function Home() {
                                 <ul className="nav nav-pills d-inline-flex text-center" id="category-tabs">
                                     {categories.map(c => (
                                         <li className="nav-item" key={c}>
-                                            <a
-                                                className={`d-flex m-2 py-2 bg-light rounded-pill ${activeCategory === c ? 'active' : ''}`}
+                                            <button
+                                                type="button"
+                                                className={`d-flex m-2 py-2 bg-light rounded-pill border-0 ${activeCategory === c ? 'active' : ''}`}
                                                 onClick={() => setActiveCategory(c)}
                                             >
                                                 <span className="text-dark" style={{ width: 130 }}>{esc(c)}</span>
-                                            </a>
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>

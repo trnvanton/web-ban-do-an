@@ -24,7 +24,7 @@ const TAB_TITLES = {
     users: 'Quản Lý Tài Khoản',
 };
 
-const CATEGORIES = ['Trái cây', 'Rau củ', 'Bánh mì', 'Thực phẩm tươi'];
+const CATEGORIES = ['Trái Cây', 'Rau Củ', 'Thực Phẩm', 'Đồ Uống'];
 const DISH_TYPES = ['Món mặn', 'Món chay', 'Đồ uống', 'Món khác'];
 const ORDER_STATUSES = ['Chờ xử lý', 'Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
 
