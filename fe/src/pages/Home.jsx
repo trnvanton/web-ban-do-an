@@ -22,11 +22,16 @@ export default function Home() {
         Promise.all([api.get('/api/san-pham'), api.get('/api/mon-an')])
             .then(([prods, mons]) => {
                 if (cancelled) return;
-                setProducts(prods);
-                setDishes(mons);
+                
+                // Nếu prods hoặc mons là đối tượng có thuộc tính 'data', hãy lấy nó
+                const productList = prods.data ? prods.data : (Array.isArray(prods) ? prods : []);
+                const dishList = mons.data ? mons.data : (Array.isArray(mons) ? mons : []);
+                
+                setProducts(productList);
+                setDishes(dishList);
             })
             .catch(err => {
-                if (!cancelled) setError((err && err.message) || 'Không thể tải dữ liệu, vui lòng thử lại.');
+                if (!cancelled) setError((err && err.message) || 'Không thể tải dữ liệu.');
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);

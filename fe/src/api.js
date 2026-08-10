@@ -1,16 +1,14 @@
-// ============================================================
-// API helper - mọi request tự động kèm cookie (httpOnly token)
-// Trả về phần `data` nếu thành công, ném Error có .status nếu thất bại
-// ============================================================
+const API_BASE_URL = 'http://localhost:3000'; // Đổi cổng nếu backend của bạn chạy cổng khác
 
 async function request(path, options = {}) {
     const { body, ...rest } = options;
     const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
 
-    const res = await fetch(path, {
-        credentials: 'same-origin',
+    const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+
+    const res = await fetch(url, {
         headers: body && !isFormData ? { 'Content-Type': 'application/json' } : {},
-        body,
+        body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
         ...rest
     });
 
@@ -21,14 +19,20 @@ async function request(path, options = {}) {
         // Phản hồi không phải JSON
     }
 
-    if (!res.ok || (data && data.success === false)) {
+    if (!res.ok) {
         const err = new Error((data && (data.message || data.error)) || `Lỗi máy chủ (HTTP ${res.status})`);
         err.status = res.status;
         throw err;
     }
 
-    // Với { success: true, data: ... } -> trả data; còn lại trả nguyên body
-    return data && data.data !== undefined ? data.data : data;
+    // Tự động xử lý thông minh: 
+    // Nếu server trả về dạng { success: true, data: [...] } thì tự động lấy phần .data
+    // Ngược lại, trả về nguyên bản dữ liệu (đối với các API cũ trả về thẳng mảng/object)
+    if (data && typeof data === 'object' && 'data' in data) {
+        return data.data;
+    }
+
+    return data;
 }
 
 export const api = {
