@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3000'; // Đổi cổng nếu backend của bạn chạy cổng khác
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function request(path, options = {}) {
     const { body, ...rest } = options;

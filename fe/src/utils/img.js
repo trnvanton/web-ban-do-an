@@ -6,7 +6,7 @@
 export function imgUrl(name) {
     if (!name) return '/img/fruite-item-1.jpg';
     const s = String(name);
-    if (/^\d/.test(s)) return '/uploads/' + s;
+    if (/^\d/.test(s)) return (import.meta.env.VITE_API_URL || 'http://localhost:3000') + '/uploads/' + s;
     return '/img/' + s;
 }
 

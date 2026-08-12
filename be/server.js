@@ -39,8 +39,22 @@ app.use(morgan('dev'));
 // Ảnh upload được lưu trong be/public/uploads, phục vụ tại /uploads
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://organicfood-menu.site',
+    'https://www.organicfood-menu.site',
+    process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:5173', // Cho phép Frontend truy cập
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+            callback(null, true);
+        } else {
+            callback(null, true);
+        }
+    },
     credentials: true
 }));
 // ================= CHỐNG BRUTE-FORCE (tấn công đoán mật khẩu) =================
