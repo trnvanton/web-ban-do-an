@@ -7,6 +7,7 @@ async function request(path, options = {}) {
     const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
     const res = await fetch(url, {
+        credentials: 'include',
         headers: body && !isFormData ? { 'Content-Type': 'application/json' } : {},
         body: isFormData ? body : (body ? JSON.stringify(body) : undefined),
         ...rest

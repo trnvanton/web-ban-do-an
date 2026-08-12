@@ -96,11 +96,11 @@ export default function Home() {
                                 <div className="carousel-inner" role="listbox">
                                     <div className="carousel-item active rounded">
                                         <img src="/img/hero-img-1.png" className="img-fluid w-100 h-100 bg-secondary rounded" alt="Trái cây tươi" />
-                                        <Link to="/shop" className="btn px-4 py-2 text-white rounded">Trái cây</Link>
+                                        <Link to="/shop?category=Trái cây" className="btn px-4 py-2 text-white rounded">Trái cây</Link>
                                     </div>
                                     <div className="carousel-item rounded">
                                         <img src="/img/hero-img-2.jpg" className="img-fluid w-100 h-100 rounded" alt="Rau củ tươi" />
-                                        <Link to="/shop" className="btn px-4 py-2 text-white rounded">Rau củ</Link>
+                                        <Link to="/shop?category=Rau củ" className="btn px-4 py-2 text-white rounded">Rau củ</Link>
                                     </div>
                                 </div>
                                 <button className="carousel-control-prev" type="button" data-bs-target="#carouselId" data-bs-slide="prev">
@@ -119,50 +119,50 @@ export default function Home() {
             {/* Hero End */}
 
             {/* Featurs Section Start */}
-            <div className="container-fluid featurs py-5">
-                <div className="container py-5">
-                    <div className="row g-4">
+            <div className="container-fluid featurs py-4">
+                <div className="container py-4">
+                    <div className="row g-4 align-items-stretch">
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded bg-light p-4">
-                                <div className="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                    <i className="fas fa-car-side fa-3x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
+                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
+                                    <i className="fas fa-car-side fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5>Giao Hàng Miễn Phí</h5>
-                                    <p className="mb-0">Miễn phí cho đơn hàng từ 300.000đ</p>
+                                    <h5 className="fw-bold mb-2 text-dark">Giao Hàng Miễn Phí</h5>
+                                    <p className="mb-0 text-muted small">Miễn phí vận chuyển cho tất cả đơn hàng</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded bg-light p-4">
-                                <div className="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                    <i className="fas fa-user-shield fa-3x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
+                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
+                                    <i className="fas fa-user-shield fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5>Thanh Toán An Toàn</h5>
-                                    <p className="mb-0">Bảo mật thông tin 100%</p>
+                                    <h5 className="fw-bold mb-2 text-dark">Thanh Toán An Toàn</h5>
+                                    <p className="mb-0 text-muted small">Bảo mật thông tin & VietQR ngân hàng 100%</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded bg-light p-4">
-                                <div className="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                    <i className="fas fa-exchange-alt fa-3x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
+                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
+                                    <i className="fas fa-exchange-alt fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5>Đổi Trả Dễ Dàng</h5>
-                                    <p className="mb-0">Hoàn tiền trong 30 ngày nếu lỗi</p>
+                                    <h5 className="fw-bold mb-2 text-dark">Đổi Trả Dễ Dàng</h5>
+                                    <p className="mb-0 text-muted small">Hoàn tiền hoặc đổi sản phẩm trong 30 ngày</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded bg-light p-4">
-                                <div className="featurs-icon btn-square rounded-circle bg-secondary mb-5 mx-auto">
-                                    <i className="fa fa-phone-alt fa-3x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
+                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
+                                    <i className="fa fa-phone-alt fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5>Hỗ Trợ 24/7</h5>
-                                    <p className="mb-0">Giải đáp thắc mắc nhanh chóng</p>
+                                    <h5 className="fw-bold mb-2 text-dark">Hỗ Trợ 24/7</h5>
+                                    <p className="mb-0 text-muted small">Giải đáp thắc mắc và hỗ trợ khách hàng nhanh chóng</p>
                                 </div>
                             </div>
                         </div>
@@ -179,20 +179,26 @@ export default function Home() {
                             <div className="col-lg-4 text-start">
                                 <h1 className="mb-0 fw-bold">Sản Phẩm Hữu Cơ</h1>
                             </div>
-                            <div className="col-lg-8 text-end">
-                                <ul className="nav nav-pills d-inline-flex text-center" id="category-tabs">
-                                    {categories.map(c => (
-                                        <li className="nav-item" key={c}>
+                            <div className="col-lg-8">
+                                <div className="d-flex flex-nowrap justify-content-lg-end align-items-center gap-2 overflow-auto pb-2 px-1 category-scroll-bar" style={{ scrollbarWidth: 'thin' }}>
+                                    {categories.map(c => {
+                                        const isActive = activeCategory === c;
+                                        return (
                                             <button
+                                                key={c}
                                                 type="button"
-                                                className={`d-flex m-2 py-2 bg-light rounded-pill border-0 ${activeCategory === c ? 'active' : ''}`}
+                                                className={`btn rounded-pill text-nowrap px-4 py-2 flex-shrink-0 transition-all ${
+                                                    isActive 
+                                                        ? 'btn-primary text-white shadow-sm fw-bold' 
+                                                        : 'btn-light text-dark border hover-shadow'
+                                                }`}
                                                 onClick={() => setActiveCategory(c)}
                                             >
-                                                <span className="text-dark" style={{ width: 130 }}>{esc(c)}</span>
+                                                {esc(c)}
                                             </button>
-                                        </li>
-                                    ))}
-                                </ul>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
@@ -231,43 +237,106 @@ export default function Home() {
             {/* Fruits Shop End */}
 
             {/* Featurs Start (Dịch vụ / Ưu đãi) */}
-            <div className="container-fluid service py-5">
-                <div className="container py-5">
+            {/* Service & Promotion Banners Start */}
+            <div className="container-fluid py-5">
+                <div className="container py-4">
                     <div className="row g-4 justify-content-center">
+                        {/* Banner 1: Lọc Trái Cây giảm giá */}
                         <div className="col-md-6 col-lg-4">
-                            <Link to="/">
-                                <div className="service-item bg-secondary rounded border border-secondary">
-                                    <img src="/img/featur-1.jpg" className="img-fluid rounded-top w-100" alt="Táo tươi" />
-                                    <div className="px-4 rounded-bottom">
-                                        <div className="service-content bg-primary text-center p-4 rounded">
-                                            <h5 className="text-white">Táo Tươi Hữu Cơ</h5>
-                                            <h3 className="mb-0">Giảm 20%</h3>
+                            <Link to="/shop?category=Trái cây" className="text-decoration-none">
+                                <div className="position-relative rounded-4 overflow-hidden shadow-sm hover-shadow-lg transition-all" style={{ height: '360px' }}>
+                                    <img 
+                                        src="/img/banner-fruit-promo.png" 
+                                        className="w-100 h-100 object-fit-cover transition-transform" 
+                                        style={{ filter: 'brightness(0.9)' }}
+                                        alt="Trái Cây Tươi Ngon" 
+                                    />
+                                    <div 
+                                        className="position-absolute d-flex flex-column justify-content-between p-4"
+                                        style={{ 
+                                            background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, rgba(0,0,0,0.05) 100%)',
+                                            top: 0, bottom: 0, left: 0, right: 0
+                                        }}
+                                    >
+                                        <div>
+                                            <span className="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold shadow-sm">
+                                                🍎 NÔNG SẢN HỮU CƠ
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white fw-bold mb-1 fs-4">Trái Cây Tươi Hữu Cơ</h4>
+                                            <p className="text-white-50 small mb-3">Nhập mới mỗi ngày - Đạt chuẩn VietGAP</p>
+                                            <span className="btn btn-primary text-white rounded-pill px-4 py-2 fw-bold small d-inline-flex align-items-center gap-2 shadow-sm">
+                                                Lọc Trái Cây <i className="fa fa-arrow-right"></i>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </Link>
                         </div>
+
+                        {/* Banner 2: Đưa sang trang Gợi Ý Món Ngon & Lập Thực Đơn */}
                         <div className="col-md-6 col-lg-4">
-                            <Link to="/">
-                                <div className="service-item bg-dark rounded border border-dark">
-                                    <img src="/img/featur-2.jpg" className="img-fluid rounded-top w-100" alt="Hoa quả tươi" />
-                                    <div className="px-4 rounded-bottom">
-                                        <div className="service-content bg-light text-center p-4 rounded">
-                                            <h5 className="text-primary">Trái Cây Tươi Ngon</h5>
-                                            <h3 className="mb-0">Miễn phí giao hàng</h3>
+                            <Link to="/goi-y-mon-an" className="text-decoration-none">
+                                <div className="position-relative rounded-4 overflow-hidden shadow-sm hover-shadow-lg transition-all" style={{ height: '360px' }}>
+                                    <img 
+                                        src="/img/banner-recipe-suggest.png" 
+                                        className="w-100 h-100 object-fit-cover transition-transform" 
+                                        style={{ filter: 'brightness(0.85)' }}
+                                        alt="Gợi Ý Món Ngon" 
+                                    />
+                                    <div 
+                                        className="position-absolute d-flex flex-column justify-content-between p-4"
+                                        style={{ 
+                                            background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.05) 100%)',
+                                            top: 0, bottom: 0, left: 0, right: 0
+                                        }}
+                                    >
+                                        <div>
+                                            <span className="badge bg-success text-white px-3 py-2 rounded-pill fw-bold shadow-sm">
+                                                ⭐ TÍNH NĂNG ĐỘC QUYỀN
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white fw-bold mb-1 fs-4">Gợi Ý Món Ngon Mỗi Ngày</h4>
+                                            <p className="text-white-50 small mb-3">Lập thực đơn tự động theo tủ lạnh của bạn</p>
+                                            <span className="btn btn-warning text-dark rounded-pill px-4 py-2 fw-bold small d-inline-flex align-items-center gap-2 shadow-sm">
+                                                Khám Phá Ngay <i className="fa fa-arrow-right"></i>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </Link>
                         </div>
+
+                        {/* Banner 3: Lọc Rau Củ VietGAP */}
                         <div className="col-md-6 col-lg-4">
-                            <Link to="/">
-                                <div className="service-item bg-primary rounded border border-primary">
-                                    <img src="/img/featur-3.jpg" className="img-fluid rounded-top w-100" alt="Rau củ" />
-                                    <div className="px-4 rounded-bottom">
-                                        <div className="service-content bg-secondary text-center p-4 rounded">
-                                            <h5 className="text-white">Rau Củ Tươi Sạch</h5>
-                                            <h3 className="mb-0">Ưu đãi lớn</h3>
+                            <Link to="/shop?category=Rau củ" className="text-decoration-none">
+                                <div className="position-relative rounded-4 overflow-hidden shadow-sm hover-shadow-lg transition-all" style={{ height: '360px' }}>
+                                    <img 
+                                        src="/img/banner-veggie-fresh.png" 
+                                        className="w-100 h-100 object-fit-cover transition-transform" 
+                                        style={{ filter: 'brightness(0.9)' }}
+                                        alt="Rau Củ Tươi Sạch" 
+                                    />
+                                    <div 
+                                        className="position-absolute d-flex flex-column justify-content-between p-4"
+                                        style={{ 
+                                            background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, rgba(0,0,0,0.05) 100%)',
+                                            top: 0, bottom: 0, left: 0, right: 0
+                                        }}
+                                    >
+                                        <div>
+                                            <span className="badge bg-info text-dark px-3 py-2 rounded-pill fw-bold shadow-sm">
+                                                🌱 100% ORGANIC
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white fw-bold mb-1 fs-4">Rau Củ Quả VietGAP</h4>
+                                            <p className="text-white-50 small mb-3">Tươi ngon thu hoạch trực tiếp từ trang trại</p>
+                                            <span className="btn btn-light text-dark rounded-pill px-4 py-2 fw-bold small d-inline-flex align-items-center gap-2 shadow-sm">
+                                                Mua Rau Củ <i className="fa fa-arrow-right"></i>
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -276,7 +345,7 @@ export default function Home() {
                     </div>
                 </div>
             </div>
-            {/* Featurs End */}
+            {/* Service & Promotion Banners End */}
 
             {/* Vesitable Shop Start (Rau củ tươi) */}
             <div className="container-fluid vesitable py-5">
@@ -300,7 +369,7 @@ export default function Home() {
                                 <h1 className="display-3 text-white">Nông Sản Hữu Cơ Tươi</h1>
                                 <p className="fw-normal display-3 text-dark mb-4">Mới Nhập Mỗi Ngày</p>
                                 <p className="mb-4 text-dark">Cam kết sản phẩm đạt tiêu chuẩn VietGAP, an toàn cho sức khỏe gia đình bạn với mức giá ưu đãi nhất.</p>
-                                <Link to="/shop" className="banner-btn btn border-2 border-white rounded-pill text-dark py-3 px-5 fw-bold">MUA NGAY</Link>
+                                <Link to="/shop?category=Trái cây" className="banner-btn btn border-2 border-white rounded-pill text-dark py-3 px-5 fw-bold">MUA NGAY</Link>
                             </div>
                         </div>
                         <div className="col-lg-6">

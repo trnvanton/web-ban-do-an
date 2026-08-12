@@ -75,22 +75,16 @@ export default function Recipes() {
         setLoading(true);
         try {
             let url = '/api/mon-an';
-            if (kw) {
-                url = '/api/goi-y-mon-an?keyword=' + encodeURIComponent(kw);
+            const queryParts = [];
+            if (kw) queryParts.push('keyword=' + encodeURIComponent(kw));
+            if (ingIds && ingIds.length > 0) queryParts.push('ingredients=' + encodeURIComponent(ingIds.join(',')));
+            
+            if (queryParts.length > 0) {
+                url = '/api/goi-y-mon-an?' + queryParts.join('&');
             }
+
             const list = await api.get(url);
-            let result = list || [];
-
-            // Nếu người dùng có chọn nguyên liệu để lọc ở tab tra cứu
-            if (ingIds.length > 0 && !kw) {
-                // Gọi API lấy món theo nguyên liệu hoặc lọc phía client
-                const resMatch = await api.post('/api/menu/generate', { ingredients: ingIds, days: 1 });
-                if (resMatch && resMatch.success) {
-                    result = resMatch.data.map(item => item.mon_an || item.mon_man).filter(Boolean);
-                }
-            }
-
-            setDishes(result);
+            setDishes(list || []);
         } catch (e) {
             alert('❌ Lỗi tải món ăn: ' + e.message);
             setDishes([]);
@@ -247,10 +241,10 @@ export default function Recipes() {
                                 Object.keys(ingredientGroups).map(category => (
                                     <div key={category} className="mb-3 border-bottom pb-2">
                                         <h6 className="fw-bold text-secondary mb-2">📌 {category}</h6>
-                                        <div className="row g-2">
+                                        <div className="row g-2 pe-1" style={{ maxHeight: '235px', overflowY: 'auto' }}>
                                             {ingredientGroups[category].map(item => (
                                                 <div className="col-md-3 col-6" key={item.id}>
-                                                    <div className="form-check border p-2 rounded bg-light">
+                                                    <div className="form-check border p-2 rounded bg-light hover-shadow">
                                                         <input
                                                             className="form-check-input ms-1"
                                                             type="checkbox"
@@ -258,7 +252,7 @@ export default function Recipes() {
                                                             checked={searchIngredients.includes(item.id)}
                                                             onChange={() => handleSearchCheckbox(item.id)}
                                                         />
-                                                        <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer" htmlFor={`search-ing-${item.id}`}>
+                                                        <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer text-truncate" style={{ maxWidth: '85%' }} htmlFor={`search-ing-${item.id}`} title={item.ten_nguyen_lieu}>
                                                             {esc(item.ten_nguyen_lieu)}
                                                         </label>
                                                     </div>
@@ -302,10 +296,10 @@ export default function Recipes() {
                                 Object.keys(ingredientGroups).map(category => (
                                     <div key={category} className="mb-3 border-bottom pb-2">
                                         <h6 className="fw-bold text-secondary mb-2">📌 {category}</h6>
-                                        <div className="row g-2">
+                                        <div className="row g-2 pe-1" style={{ maxHeight: '235px', overflowY: 'auto' }}>
                                             {ingredientGroups[category].map(item => (
                                                 <div className="col-md-3 col-6" key={item.id}>
-                                                    <div className="form-check border p-2 rounded bg-light">
+                                                    <div className="form-check border p-2 rounded bg-light hover-shadow">
                                                         <input
                                                             className="form-check-input ms-1"
                                                             type="checkbox"
@@ -313,7 +307,7 @@ export default function Recipes() {
                                                             checked={selectedIngredients.includes(item.id)}
                                                             onChange={() => handleMenuCheckbox(item.id)}
                                                         />
-                                                        <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer" htmlFor={`ing-${item.id}`}>
+                                                        <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer text-truncate" style={{ maxWidth: '85%' }} htmlFor={`ing-${item.id}`} title={item.ten_nguyen_lieu}>
                                                             {esc(item.ten_nguyen_lieu)}
                                                         </label>
                                                     </div>

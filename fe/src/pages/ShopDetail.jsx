@@ -14,7 +14,10 @@ export default function ShopDetail() {
     const [error, setError] = useState('');
     const [qty, setQty] = useState(1);
 
+    const [reviewData, setReviewData] = useState({ total_reviews: 0, rating_average: 0, reviews: [] });
+
     useEffect(() => {
+        window.scrollTo(0, 0);
         let mounted = true;
         setLoading(true);
         setError('');
@@ -27,6 +30,19 @@ export default function ShopDetail() {
                 const p = await api.get('/api/san-pham/' + id);
                 if (!mounted) return;
                 setProduct(p);
+
+                // Lấy đánh giá của sản phẩm
+                api.get('/api/danh-gia/san-pham/' + id)
+                    .then(data => {
+                        if (mounted && data) {
+                            setReviewData({
+                                total_reviews: Number(data.total_reviews) || 0,
+                                rating_average: Number(data.rating_average) || 0,
+                                reviews: Array.isArray(data.reviews) ? data.reviews : []
+                            });
+                        }
+                    })
+                    .catch(() => {});
 
                 try {
                     const all = await api.get('/api/san-pham');
@@ -133,13 +149,16 @@ export default function ShopDetail() {
                             </p>
                             <h4 className="fw-bold mb-3 text-success">{fmtVND(product.gia)}</h4>
 
-                            <div className="d-flex mb-3 text-warning">
-                                <i className="fa fa-star"></i>
-                                <i className="fa fa-star"></i>
-                                <i className="fa fa-star"></i>
-                                <i className="fa fa-star"></i>
-                                <i className="fa fa-star"></i>
-                                <span className="text-muted ms-2 small">(5.0 Đánh giá)</span>
+                            <div className="d-flex align-items-center mb-3">
+                                <div className="text-warning me-2 fs-5">
+                                    {[1, 2, 3, 4, 5].map(s => (
+                                        <i key={s} className={`fa ${s <= Math.round(reviewData.rating_average || 0) ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'}`}></i>
+                                    ))}
+                                </div>
+                                <span className="fw-bold text-dark me-2">
+                                    {reviewData.total_reviews > 0 ? `${reviewData.rating_average} / 5` : 'Chưa có đánh giá'}
+                                </span>
+                                <span className="text-muted small">({reviewData.total_reviews} nhận xét từ người mua)</span>
                             </div>
 
                             <p className="mb-3 text-secondary">
@@ -191,6 +210,46 @@ export default function ShopDetail() {
                                 </button>
                             )}
                         </div>
+                    </div>
+
+                    {/* KHỐI ĐÁNH GIÁ TỪ KHÁCH HÀNG */}
+                    <div className="bg-light p-4 rounded-4 mb-5 border">
+                        <h4 className="fw-bold mb-4">
+                            <i className="fa fa-comments text-primary me-2"></i>Đánh Giá Từ Khách Hàng ({reviewData.total_reviews})
+                        </h4>
+
+                        {reviewData.reviews.length === 0 ? (
+                            <div className="text-center py-4 text-muted">
+                                <i className="fa fa-comment-dots fa-2x mb-2 d-block text-secondary"></i>
+                                Chưa có nhận xét nào cho sản phẩm này. Hãy là người đầu tiên mua và đánh giá nhé!
+                            </div>
+                        ) : (
+                            <div className="d-flex flex-column gap-3">
+                                {reviewData.reviews.map(r => (
+                                    <div key={r.id} className="bg-white p-3 rounded-3 border shadow-sm">
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style={{ width: 36, height: 36 }}>
+                                                    {(r.ten_user || 'K').charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <h6 className="fw-bold mb-0 text-dark">{esc(r.ten_user)}</h6>
+                                                    <span className="text-muted small">
+                                                        {r.ngay_danh_gia ? new Date(r.ngay_danh_gia).toLocaleDateString('vi-VN') : 'Vừa xong'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="text-warning">
+                                                {[1, 2, 3, 4, 5].map(s => (
+                                                    <i key={s} className={`fa ${s <= r.so_sao ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'}`}></i>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="mb-0 text-secondary ps-5">{esc(r.noi_dung || 'Sản phẩm tươi ngon, đóng gói rất cẩn thận!')}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Sản phẩm liên quan */}

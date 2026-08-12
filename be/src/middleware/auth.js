@@ -1,12 +1,12 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const DEFAULT_SECRET = 'fruitables-default-secret-key-at-least-32-chars-long';
+const JWT_SECRET = process.env.JWT_SECRET || DEFAULT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-if (!JWT_SECRET || JWT_SECRET.length < 32) {
-    console.error('⚠️  CẢNH BÁO: JWT_SECRET chưa được đặt hoặc quá ngắn trong .env!');
-    console.error('    Token sẽ KHÔNG AN TOÀN. Hãy đặt khóa bí mật dài >= 32 ký tự.');
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    console.warn('⚠️  CẢNH BÁO: JWT_SECRET chưa được đặt hoặc quá ngắn trong .env! Đang sử dụng khóa mặc định.');
 }
 
 // Tạo token + ghi vào cookie httpOnly (JS ở trình duyệt không đọc được -> chống đánh cắp token)

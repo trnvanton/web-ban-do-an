@@ -20,17 +20,52 @@ router.get('/mon-an', async (req, res) => {
     }
 });
 
-// Gợi ý món ăn theo từ khóa (công khai)
+// Gợi ý món ăn theo từ khóa & nguyên liệu chọn (công khai)
 router.get('/goi-y-mon-an', async (req, res) => {
     const keyword = sanitize(req.query.keyword || '', 100);
+    const ingredients = req.query.ingredients || '';
+
     try {
         let sql = 'SELECT * FROM mon_an';
         const params = [];
+
+        // 1. Lọc theo từ khóa ô tìm kiếm
         if (keyword) {
-            sql += ' WHERE ten_mon LIKE ? OR nguyen_lieu_chinh LIKE ? OR cong_thuc LIKE ?';
+            sql += ' WHERE (ten_mon LIKE ? OR nguyen_lieu_chinh LIKE ? OR cong_thuc LIKE ?)';
             params.push(`%${keyword}%`, `%${keyword}%`, `%${keyword}%`);
         }
-        const results = await query(sql, params);
+
+        sql += ' ORDER BY id DESC';
+
+        let results = await query(sql, params);
+
+        // 2. Lọc theo danh sách nguyên liệu đã chọn (tag/checkbox)
+        if (ingredients) {
+            const ingList = String(ingredients).split(',').map(s => s.trim()).filter(Boolean);
+            const ingIds = ingList.map(Number).filter(n => !isNaN(n) && n > 0);
+
+            let targetIngNames = [];
+            if (ingIds.length > 0) {
+                const placeholders = ingIds.map(() => '?').join(',');
+                const rows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingIds);
+                targetIngNames = (rows || []).map(r => r.ten_nguyen_lieu);
+            }
+
+            ingList.forEach(item => {
+                if (isNaN(Number(item)) && !targetIngNames.includes(item)) {
+                    targetIngNames.push(item);
+                }
+            });
+
+            if (targetIngNames.length > 0) {
+                const searchKeys = targetIngNames.map(n => n.split('/')[0].split('(')[0].trim().toLowerCase());
+                results = results.filter(dish => {
+                    const text = `${dish.ten_mon || ''} ${dish.nguyen_lieu_chinh || ''}`.toLowerCase();
+                    return searchKeys.some(k => text.includes(k));
+                });
+            }
+        }
+
         ok(res, '', results);
     } catch (err) {
         console.error('❌ Lỗi gợi ý món ăn:', err);

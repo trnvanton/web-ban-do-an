@@ -27,10 +27,28 @@ router.post('/don-hang', async (req, res) => {
     const tokenUser = getAuthUser(req);
     const user_id = tokenUser ? tokenUser.id : null;
 
+    const phuong_thuc_thanh_toan = sanitize(req.body.phuong_thuc_thanh_toan) || 'COD';
+    const trang_thai_thanh_toan = phuong_thuc_thanh_toan === 'BANK_QR' ? 'Chờ xác nhận chuyển khoản' : 'Chưa thanh toán (COD)';
+
     try {
+        // Kiểm tra tồn kho từng sản phẩm trước khi cho đặt hàng
+        for (const item of chi_tiet) {
+            const pId = Number(item.id);
+            const qty = Number(item.quantity);
+            if (pId > 0 && qty > 0) {
+                const prods = await query('SELECT ten_san_pham, so_luong_ton FROM san_pham WHERE id = ?', [pId]);
+                if (prods && prods.length > 0) {
+                    const currentStock = Number(prods[0].so_luong_ton) || 0;
+                    if (qty > currentStock) {
+                        return fail(res, 400, `Sản phẩm "${prods[0].ten_san_pham}" chỉ còn ${currentStock} trong kho (bạn đặt ${qty})!`);
+                    }
+                }
+            }
+        }
+
         const orderResult = await query(
-            "INSERT INTO don_hang (user_id, ten_khach_hang, so_dien_thoai, dia_chi, tong_tien, trang_thai, ngay_dat) VALUES (?, ?, ?, ?, ?, 'Chờ xử lý', NOW())",
-            [user_id, ho_ten, sdt, dia_chi, isPositiveNumber(tong_tien) ? tong_tien : 0]
+            "INSERT INTO don_hang (user_id, ten_khach_hang, so_dien_thoai, dia_chi, tong_tien, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, ngay_dat) VALUES (?, ?, ?, ?, ?, 'Chờ xử lý', ?, ?, NOW())",
+            [user_id, ho_ten, sdt, dia_chi, isPositiveNumber(tong_tien) ? tong_tien : 0, phuong_thuc_thanh_toan, trang_thai_thanh_toan]
         );
 
         const donHangId = orderResult.insertId;
@@ -55,6 +73,18 @@ router.post('/don-hang', async (req, res) => {
             [detailsValues]
         );
 
+        // TRỪ SỐ LƯỢNG TỒN KHO TRONG CSDL MỖI KHI ĐẶT HÀNG THÀNH CÔNG
+        for (const item of chi_tiet) {
+            const pId = Number(item.id);
+            const qty = Number(item.quantity);
+            if (pId > 0 && qty > 0) {
+                await query(
+                    'UPDATE san_pham SET so_luong_ton = GREATEST(0, CAST(so_luong_ton AS SIGNED) - ?) WHERE id = ?',
+                    [qty, pId]
+                );
+            }
+        }
+
         ok(res, 'Đặt hàng thành công!', { donHangId });
     } catch (err) {
         console.error('❌ Lỗi tạo đơn hàng:', err);
@@ -74,8 +104,15 @@ router.get('/admin/don-hang', requireAdmin, async (req, res) => {
     }
 });
 
-// Cập nhật trạng thái đơn hàng - CHỈ cho phép các trạng thái cố định
+// Cập nhật trạng thái đơn hàng - Tuân thủ quy trình chuyển trạng thái hợp lệ
 const TRANG_THAI_HOP_LE = ['Chờ xử lý', 'Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
+const ALLOWED_TRANSITIONS = {
+    'Chờ xử lý': ['Chờ xử lý', 'Đang giao', 'Đã hủy'],
+    'Đang giao': ['Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'],
+    'Đã giao': ['Đã giao', 'Đã hoàn thành'],
+    'Đã hoàn thành': ['Đã hoàn thành'],
+    'Đã hủy': ['Đã hủy']
+};
 
 router.put('/admin/don-hang/:id', requireAdmin, async (req, res) => {
     const { trang_thai } = req.body;
@@ -83,10 +120,46 @@ router.put('/admin/don-hang/:id', requireAdmin, async (req, res) => {
         return fail(res, 400, 'Trạng thái đơn hàng không hợp lệ!');
     }
     try {
+        const oldOrders = await query('SELECT trang_thai FROM don_hang WHERE id = ?', [req.params.id]);
+        if (!oldOrders || oldOrders.length === 0) {
+            return fail(res, 404, 'Không tìm thấy đơn hàng!');
+        }
+
+        const currentStatus = oldOrders[0].trang_thai || 'Chờ xử lý';
+        const allowedNext = ALLOWED_TRANSITIONS[currentStatus] || TRANG_THAI_HOP_LE;
+
+        if (!allowedNext.includes(trang_thai)) {
+            return fail(res, 400, `Không thể chuyển trực tiếp từ "${currentStatus}" sang "${trang_thai}". Quy trình: Chờ xử lý ➜ Đang giao ➜ Đã giao / Đã hoàn thành.`);
+        }
+
+        // Nếu chuyển sang trạng thái "Đã hủy" -> Hoàn trả tồn kho cho sản phẩm
+        if (currentStatus !== 'Đã hủy' && trang_thai === 'Đã hủy') {
+            const details = await query('SELECT product_id, so_luong FROM chi_tiet_don_hang WHERE don_hang_id = ?', [req.params.id]);
+            for (const d of details) {
+                if (d.product_id && Number(d.so_luong) > 0) {
+                    await query(
+                        'UPDATE san_pham SET so_luong_ton = so_luong_ton + ? WHERE id = ?',
+                        [Number(d.so_luong), d.product_id]
+                    );
+                }
+            }
+        }
+
         await query('UPDATE don_hang SET trang_thai = ? WHERE id = ?', [trang_thai, req.params.id]);
-        ok(res, 'Cập nhật trạng thái thành công!');
+        ok(res, `Đã cập nhật trạng thái đơn hàng thành "${trang_thai}"!`);
     } catch (err) {
-        console.error('❌ Lỗi cập nhật trạng thái:', err);
+        console.error('❌ Lỗi cập nhật đơn hàng:', err);
+        fail(res, 500, 'Lỗi máy chủ!');
+    }
+});
+
+// Admin xác nhận đã nhận tiền chuyển khoản
+router.put('/admin/don-hang/:id/xac-nhan-thanh-toan', requireAdmin, async (req, res) => {
+    try {
+        await query("UPDATE don_hang SET trang_thai_thanh_toan = 'Đã thanh toán (QR)' WHERE id = ?", [req.params.id]);
+        ok(res, 'Đã xác nhận thanh toán tiền chuyển khoản thành công!');
+    } catch (err) {
+        console.error('❌ Lỗi xác nhận thanh toán:', err);
         fail(res, 500, 'Lỗi máy chủ!');
     }
 });
@@ -107,6 +180,26 @@ router.get('/user/don-hang', requireAuth, async (req, res) => {
         ok(res, '', results);
     } catch (err) {
         console.error('❌ Lỗi lấy đơn hàng user:', err);
+        fail(res, 500, 'Lỗi máy chủ!');
+    }
+});
+
+// Khách hàng xác nhận đã nhận được hàng
+router.put('/user/don-hang/:id/xac-nhan-da-nhan', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const orders = await query('SELECT * FROM don_hang WHERE id = ? AND user_id = ?', [id, req.user.id]);
+        if (!orders || orders.length === 0) {
+            return fail(res, 404, 'Không tìm thấy đơn hàng của bạn!');
+        }
+        if (orders[0].trang_thai !== 'Đã giao') {
+            return fail(res, 400, 'Đơn hàng phải ở trạng thái "Đã giao" mới có thể xác nhận đã nhận hàng!');
+        }
+
+        await query("UPDATE don_hang SET trang_thai = 'Đã hoàn thành' WHERE id = ?", [id]);
+        ok(res, '🎉 Cảm ơn bạn đã xác nhận nhận hàng thành công! Đơn hàng đã chuyển sang trạng thái Đã hoàn thành.');
+    } catch (err) {
+        console.error('❌ Lỗi xác nhận nhận hàng:', err);
         fail(res, 500, 'Lỗi máy chủ!');
     }
 });

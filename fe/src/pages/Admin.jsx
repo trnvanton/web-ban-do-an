@@ -28,6 +28,23 @@ const CATEGORIES = ['Trái Cây', 'Rau Củ', 'Thực Phẩm', 'Đồ Uống'];
 const DISH_TYPES = ['Món mặn', 'Món chay', 'Đồ uống', 'Món khác'];
 const ORDER_STATUSES = ['Chờ xử lý', 'Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
 
+const getAllowedNextStatuses = (currentStatus) => {
+    switch (currentStatus) {
+        case 'Chờ xử lý':
+            return ['Chờ xử lý', 'Đang giao', 'Đã hủy'];
+        case 'Đang giao':
+            return ['Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
+        case 'Đã giao':
+            return ['Đã giao', 'Đã hoàn thành'];
+        case 'Đã hoàn thành':
+            return ['Đã hoàn thành'];
+        case 'Đã hủy':
+            return ['Đã hủy'];
+        default:
+            return ORDER_STATUSES;
+    }
+};
+
 const emptyProductForm = () => ({ ten_san_pham: '', danh_muc: CATEGORIES[0], gia: '', so_luong_ton: '', mo_ta: '', file: null, preview: '' });
 const emptyDishForm = () => ({ ten_mon: '', loai_mon: DISH_TYPES[0], nguyen_lieu_chinh: '', cong_thuc: '', file: null, preview: '' });
 
@@ -278,6 +295,17 @@ export default function Admin() {
         }
     };
 
+    const confirmPayment = async (id) => {
+        if (!confirm(`Xác nhận Admin đã kiểm tra tài khoản và nhận đủ tiền chuyển khoản cho đơn hàng #DH${id}?`)) return;
+        try {
+            await api.put('/api/admin/don-hang/' + id + '/xac-nhan-thanh-toan');
+            alert('✅ Đã xác nhận thanh toán tiền chuyển khoản thành công!');
+            loadAll();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     const viewOrderDetails = async (id) => {
         setOrderDetailId(id);
         setOrderDetailItems([]);
@@ -314,9 +342,9 @@ export default function Admin() {
                 body { background-color: #f4f6f9; }
                 .admin-sidebar {
                     width: 260px;
-                    height: calc(100vh - 90px);
+                    height: 100vh;
                     position: fixed;
-                    top: 90px;
+                    top: 0;
                     left: 0;
                     background: #2c3e50;
                     color: #fff;
@@ -621,6 +649,7 @@ export default function Admin() {
                                                 <th>Số Điện Thoại</th>
                                                 <th>Địa Chỉ</th>
                                                 <th>Tổng Tiền</th>
+                                                <th>Thanh Toán</th>
                                                 <th>Ngày Đặt</th>
                                                 <th>Trạng Thái</th>
                                                 <th>Thao Tác</th>
@@ -628,7 +657,7 @@ export default function Admin() {
                                         </thead>
                                         <tbody>
                                             {orders.length === 0 ? (
-                                                <tr><td colSpan={8} className="text-center text-muted py-4">Chưa có đơn hàng nào</td></tr>
+                                                <tr><td colSpan={9} className="text-center text-muted py-4">Chưa có đơn hàng nào</td></tr>
                                             ) : orders.map(o => (
                                                 <tr key={o.id}>
                                                     <td className="fw-bold">#DH{esc(o.id)}</td>
@@ -641,6 +670,29 @@ export default function Admin() {
                                                         {esc(o.dia_chi || 'Chưa có')}
                                                     </td>
                                                     <td className="text-success fw-bold">{fmtVND(o.tong_tien)}</td>
+                                                    <td>
+                                                        {o.phuong_thuc_thanh_toan === 'BANK_QR' ? (
+                                                            <div>
+                                                                {o.trang_thai_thanh_toan === 'Đã thanh toán (QR)' ? (
+                                                                    <span className="badge bg-success"><i className="fas fa-check-circle me-1"></i>Đã CK QR</span>
+                                                                ) : (
+                                                                    <div>
+                                                                        <span className="badge bg-warning text-dark mb-1 d-block">📲 Chờ CK</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="btn btn-sm btn-success py-0 px-2 small shadow-sm"
+                                                                            style={{ fontSize: '11px' }}
+                                                                            onClick={() => confirmPayment(o.id)}
+                                                                        >
+                                                                            <i className="fas fa-check me-1"></i>Xác nhận tiền
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="badge bg-secondary">💵 COD</span>
+                                                        )}
+                                                    </td>
                                                     <td>{fmtDateTime(o.ngay_dat)}</td>
                                                     <td>
                                                         <select
@@ -649,7 +701,7 @@ export default function Admin() {
                                                             defaultValue={o.trang_thai}
                                                             onChange={(e) => updateOrderStatus(o.id, e.target.value)}
                                                         >
-                                                            {ORDER_STATUSES.map(st => (
+                                                            {getAllowedNextStatuses(o.trang_thai).map(st => (
                                                                 <option key={st} value={st}>{esc(st)}</option>
                                                             ))}
                                                         </select>

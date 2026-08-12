@@ -1,8 +1,18 @@
-import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import { useAuth } from './contexts/AuthContext';
+
+function ScrollToTop() {
+    const { pathname, search } = useLocation();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname, search]);
+
+    return null;
+}
 
 const Home = lazy(() => import('./pages/Home'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -45,10 +55,14 @@ function RequireAdmin({ children }) {
 }
 
 export default function App() {
+    const location = useLocation();
+    const isAdmin = location.pathname.startsWith('/admin');
+
     return (
         <Suspense fallback={<Loading />}>
-            <Navbar />
-            <div style={{ paddingTop: '90px' }}>
+            <ScrollToTop />
+            {!isAdmin && <Navbar />}
+            <div style={{ paddingTop: isAdmin ? '0px' : '90px' }}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/shop" element={<Shop />} />
@@ -66,7 +80,7 @@ export default function App() {
                     <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>
-            <Footer />
+            {!isAdmin && <Footer />}
         </Suspense>
     );
 }

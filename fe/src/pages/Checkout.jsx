@@ -12,6 +12,8 @@ export default function Checkout() {
     const [form, setForm] = useState({ ho_ten: '', sdt: '', dia_chi: '' });
     const [saveNew, setSaveNew] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('COD'); // 'COD' or 'BANK_QR'
+    const [qrModalData, setQrModalData] = useState(null);
 
     useEffect(() => {
         let mounted = true;
@@ -35,6 +37,15 @@ export default function Checkout() {
         setForm({ ho_ten: a.ho_ten, sdt: a.sdt, dia_chi: a.dia_chi });
     };
 
+    const finishOrder = () => {
+        if (qrModalData) {
+            alert(`🎉 Shop đã ghi nhận yêu cầu thanh toán cho đơn hàng #${qrModalData.orderId}! Vui lòng chờ Shop kiểm tra tài khoản và xử lý đơn hàng.`);
+        }
+        setQrModalData(null);
+        clear();
+        navigate('/don-hang');
+    };
+
     const onSubmit = async e => {
         e.preventDefault();
         const ho_ten = form.ho_ten.trim();
@@ -52,19 +63,30 @@ export default function Checkout() {
 
         setSubmitting(true);
         try {
-            await api.post('/api/don-hang', {
+            const res = await api.post('/api/don-hang', {
                 ho_ten,
                 sdt,
                 dia_chi,
                 tong_tien: total,
-                chi_tiet: items
+                chi_tiet: items,
+                phuong_thuc_thanh_toan: paymentMethod
             });
             if (saveNew) {
                 api.post('/api/user/dia-chi', { user_id: null, ho_ten, sdt, dia_chi, mac_dinh: 0 }).catch(() => {});
             }
-            alert('🎉 Đặt hàng thành công! Cảm ơn bạn đã mua sắm.');
-            clear();
-            navigate('/don-hang');
+
+            const orderId = res?.data?.id || res?.id || Math.floor(Date.now() / 1000);
+
+            if (paymentMethod === 'BANK_QR') {
+                setQrModalData({
+                    orderId,
+                    total
+                });
+            } else {
+                alert('🎉 Đặt hàng thành công! Cảm ơn bạn đã mua sắm.');
+                clear();
+                navigate('/don-hang');
+            }
         } catch (err) {
             alert('❌ Có lỗi xảy ra khi đặt hàng: ' + err.message);
         } finally {
@@ -196,29 +218,46 @@ export default function Checkout() {
                                             </table>
                                         </div>
 
-                                        {/* Tổng tiền */}
-                                        <div className="border-top border-bottom py-3 mb-4">
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <span className="fw-bold">Tạm tính:</span>
-                                                <span id="checkout-subtotal" className="fw-bold">{fmtVND(total)}</span>
+                                        {/* Phương thức thanh toán */}
+                                        <div className="mb-4">
+                                            <h5 className="fw-bold mb-3"><i className="fa fa-credit-card me-2 text-primary"></i>Phương Thức Thanh Toán</h5>
+                                            <div className="form-check mb-2 p-3 border rounded bg-white cursor-pointer" onClick={() => setPaymentMethod('COD')}>
+                                                <input 
+                                                    className="form-check-input ms-0 me-2" 
+                                                    type="radio" 
+                                                    name="paymentMethod" 
+                                                    id="pm-cod" 
+                                                    checked={paymentMethod === 'COD'} 
+                                                    onChange={() => setPaymentMethod('COD')} 
+                                                />
+                                                <label className="form-check-label fw-bold cursor-pointer" htmlFor="pm-cod">
+                                                    💵 Thanh toán khi nhận hàng (COD)
+                                                </label>
+                                                <p className="text-muted small mb-0 mt-1">Thanh toán bằng tiền mặt trực tiếp cho shipper khi nhận hàng.</p>
                                             </div>
-                                            <div className="d-flex justify-content-between mb-2">
-                                                <span className="fw-bold">Phí vận chuyển:</span>
-                                                <span className="text-success fw-bold">Miễn phí</span>
-                                            </div>
-                                            <hr />
-                                            <div className="d-flex justify-content-between fs-5 text-primary fw-bold">
-                                                <span>TỔNG CỘNG:</span>
-                                                <span id="checkout-total">{fmtVND(total)}</span>
+
+                                            <div className="form-check p-3 border rounded bg-white cursor-pointer" onClick={() => setPaymentMethod('BANK_QR')}>
+                                                <input 
+                                                    className="form-check-input ms-0 me-2" 
+                                                    type="radio" 
+                                                    name="paymentMethod" 
+                                                    id="pm-qr" 
+                                                    checked={paymentMethod === 'BANK_QR'} 
+                                                    onChange={() => setPaymentMethod('BANK_QR')} 
+                                                />
+                                                <label className="form-check-label fw-bold cursor-pointer" htmlFor="pm-qr">
+                                                    📲 Chuyển khoản VietQR / Ví MoMo
+                                                </label>
+                                                <p className="text-muted small mb-0 mt-1">Quét mã QR bằng App Ngân hàng hoặc MoMo để chuyển khoản nhanh.</p>
                                             </div>
                                         </div>
 
                                         <button
                                             type="submit"
-                                            className="btn border-secondary py-3 px-4 text-uppercase w-100 text-primary fw-bold bg-white mt-4"
+                                            className="btn btn-primary py-3 px-4 text-uppercase w-100 text-white fw-bold shadow mt-2"
                                             disabled={submitting}
                                         >
-                                            {submitting ? 'Đang xử lý...' : 'Xác Nhận Đặt Hàng'}
+                                            {submitting ? 'Đang xử lý...' : paymentMethod === 'BANK_QR' ? 'Đặt Hàng & Thanh Toán QR' : 'Xác Nhận Đặt Hàng'}
                                         </button>
                                     </div>
                                 </div>
@@ -228,6 +267,66 @@ export default function Checkout() {
                 </div>
             </div>
             {/* Checkout Page End */}
+
+            {/* Modal Thanh toán VietQR */}
+            {qrModalData && (
+                <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} tabIndex="-1">
+                    <div className="modal-dialog modal-dialog-centered modal-lg">
+                        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div className="modal-header bg-primary text-white py-3">
+                                <h5 className="modal-title fw-bold text-white mb-0">
+                                    <i className="fa fa-qrcode me-2"></i>Thanh Toán Đơn Hàng #{qrModalData.orderId}
+                                </h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={finishOrder}></button>
+                            </div>
+                            <div className="modal-body p-4 text-center">
+                                <div className="alert alert-success fw-bold py-2 mb-3">
+                                    🎉 Đặt hàng thành công! Vui lòng quét mã QR bên dưới để hoàn tất thanh toán.
+                                </div>
+                                <div className="row align-items-center g-4">
+                                    <div className="col-md-6">
+                                        <div className="p-3 border rounded-3 bg-light d-inline-block shadow-sm">
+                                            <img 
+                                                src={`https://img.vietqr.io/image/TCB-9974838304-compact2.png?amount=${qrModalData.total}&addInfo=FRUITE${qrModalData.orderId}&accountName=TRINH%20VAN%20TOAN`} 
+                                                className="img-fluid rounded" 
+                                                alt="Mã VietQR Thanh Toán"
+                                                style={{ maxHeight: 280 }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 text-start">
+                                        <h6 className="fw-bold text-primary mb-3">Thông Tin Chuyển Khoản:</h6>
+                                        <div className="mb-2">
+                                            <span className="text-muted">Ngân hàng:</span> <strong className="text-dark">Techcombank (NH Kỹ Thương)</strong>
+                                        </div>
+                                        <div className="mb-2">
+                                            <span className="text-muted">Số tài khoản:</span> <strong className="text-danger fs-5 ms-1">9974838304</strong>
+                                        </div>
+                                        <div className="mb-2">
+                                            <span className="text-muted">Chủ tài khoản:</span> <strong className="text-dark">TRINH VAN TOAN</strong>
+                                        </div>
+                                        <div className="mb-2">
+                                            <span className="text-muted">Số tiền:</span> <strong className="text-success fs-5 ms-1">{fmtVND(qrModalData.total)}</strong>
+                                        </div>
+                                        <div className="mb-3">
+                                            <span className="text-muted">Nội dung CK:</span> <strong className="bg-warning text-dark px-2 py-1 rounded ms-1">FRUITE{qrModalData.orderId}</strong>
+                                        </div>
+                                        <p className="text-muted small mb-0">
+                                            <i className="fa fa-info-circle me-1 text-primary"></i>
+                                            Hệ thống sẽ tự động cập nhật đơn hàng sau khi nhận được tiền chuyển khoản.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer bg-light py-3">
+                                <button type="button" className="btn btn-primary rounded-pill px-4 fw-bold" onClick={finishOrder}>
+                                    <i className="fa fa-paper-plane me-1"></i> Tôi Đã Hoàn Tất Chuyển Khoản (Chờ Shop Kiểm Tra)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }

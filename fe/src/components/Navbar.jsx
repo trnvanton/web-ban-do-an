@@ -9,7 +9,7 @@ export default function Navbar() {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
 
-    const navLinkClass = ({ isActive }) => 'nav-item nav-link' + (isActive ? ' active' : '');
+    const navLinkClass = ({ isActive }) => 'nav-item nav-link px-2 px-lg-3 text-nowrap fw-semibold' + (isActive ? ' active text-primary fw-bold' : '');
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -31,12 +31,12 @@ export default function Navbar() {
     return (
         <>
             {/* Navbar */}
-            <div className="container-fluid fixed-top bg-white shadow-sm py-2">
+            <div className="container-fluid fixed-top bg-white shadow-sm py-1">
                 <div className="container px-0">
                     <nav className="navbar navbar-light bg-white navbar-expand-xl py-2">
                         {/* Logo */}
-                        <Link to="/" className="navbar-brand">
-                            <h1 className="text-primary display-6 mb-0 fw-bold">Fruitables</h1>
+                        <Link to="/" className="navbar-brand me-4">
+                            <h1 className="text-primary display-6 mb-0 fw-bold fs-2">Fruitables</h1>
                         </Link>
 
                         <button className="navbar-toggler py-2 px-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -45,11 +45,10 @@ export default function Navbar() {
 
                         <div className="collapse navbar-collapse bg-white" id="navbarCollapse">
                             {/* Links Menu chính */}
-                            <div className="navbar-nav mx-auto">
+                            <div className="navbar-nav mx-auto text-nowrap d-flex flex-row flex-wrap flex-xl-nowrap justify-content-center align-items-center">
                                 <NavLink to="/" className={navLinkClass} end>Trang chủ</NavLink>
                                 <NavLink to="/shop" className={navLinkClass}>Cửa hàng</NavLink>
                                 <NavLink to="/gio-hang" className={navLinkClass}>Giỏ hàng</NavLink>
-                                <NavLink to="/thanh-toan" className={navLinkClass}>Thanh toán</NavLink>
                                 <NavLink to="/goi-y-mon-an" className={navLinkClass}>Món Ngon Mỗi Ngày</NavLink>
                                 <NavLink to="/lien-he" className={navLinkClass}>Liên hệ</NavLink>
                             </div>

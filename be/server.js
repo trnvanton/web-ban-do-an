@@ -16,6 +16,7 @@ const orderRoutes = require('./src/routes/order.routes');
 const addressRoutes = require('./src/routes/address.routes');
 const userRoutes = require('./src/routes/user.routes');
 const uploadRoutes = require('./src/routes/upload.routes');
+const reviewRoutes = require('./src/routes/review.routes');
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api', orderRoutes);
 app.use('/api', addressRoutes);
 app.use('/api', userRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api', reviewRoutes);
 
 // ================= API BỔ SUNG (NGUYÊN LIỆU & MENU) =================
 
@@ -84,63 +86,98 @@ app.get('/api/nguyen-lieu', async (req, res) => {
 app.post('/api/menu/generate', async (req, res) => {
     try {
         const { ingredients, days } = req.body;
-        let dishes = [];
+        
+        // 1. Lấy toàn bộ món ăn từ CSDL
+        const allDishesResult = await query('SELECT id, ten_mon, nguyen_lieu_chinh, cong_thuc, hinh_anh, loai_mon FROM mon_an');
+        const allDishes = Array.isArray(allDishesResult) ? (Array.isArray(allDishesResult[0]) ? allDishesResult[0] : allDishesResult) : [];
 
-        try {
-            if (ingredients && ingredients.length > 0) {
-                const sql = `SELECT DISTINCT MA.id, MA.ten_mon, MA.cong_thuc, MA.hinh_anh, MA.loai_mon 
-                             FROM mon_an MA 
-                             JOIN dinh_luong DL ON MA.id = DL.id_mon 
-                             WHERE DL.id_nguyen_lieu IN (?)`;
-                const [rows] = await query(sql, [ingredients]);
-                if (rows && rows.length > 0) dishes = rows;
-            }
-        } catch (dbErr) {
-            console.error("Lỗi truy vấn:", dbErr.message);
-        }
-
-        // Nếu chưa có định lượng, lấy toàn bộ món ăn
-        if (!dishes || dishes.length === 0) {
-            const result = await query('SELECT id, ten_mon, cong_thuc, hinh_anh, loai_mon FROM mon_an');
-            dishes = Array.isArray(result[0]) ? result[0] : result;
-        }
-
-        if (!dishes || dishes.length === 0) {
+        if (!allDishes || allDishes.length === 0) {
             return res.json({ success: false, message: "Cơ sở dữ liệu trống món ăn." });
         }
 
-        // Phân loại món ăn theo đúng 4 nhóm yêu cầu: Canh, Mặn, Xào/Rán, Tráng miệng
-        const poolMan = dishes.filter(d => (d.loai_mon || '').toLowerCase().includes('mặn') || (d.loai_mon || '').toLowerCase().includes('kho') || (d.loai_mon || '').toLowerCase().includes('rán') || (d.loai_mon || '').toLowerCase().includes('chiên'));
-        const poolXaoRau = dishes.filter(d => (d.loai_mon || '').toLowerCase().includes('xào') || (d.loai_mon || '').toLowerCase().includes('rau'));
-        const poolCanh = dishes.filter(d => (d.loai_mon || '').toLowerCase().includes('canh'));
-        const poolTrangMieng = dishes.filter(d => (d.loai_mon || '').toLowerCase().includes('tráng miệng') || (d.loai_mon || '').toLowerCase().includes('hoa quả') || (d.loai_mon || '').toLowerCase().includes('trái cây'));
-
-        // Hàm lấy ngẫu nhiên 1 món từ pool (nếu nhóm nào trống thì lấy tạm món bất kỳ trong danh sách)
-        const getRandomDish = (pool) => {
-            const target = pool.length > 0 ? pool : dishes;
-            return target[Math.floor(Math.random() * target.length)];
+        // 2. Phân loại nghiêm ngặt nhóm món ăn
+        const isDessert = (d) => {
+            const cat = (d.loai_mon || '').toLowerCase();
+            const name = (d.ten_mon || '').toLowerCase();
+            return cat.includes('tráng miệng') || name.includes('tráng miệng') || cat.includes('hoa quả') || cat.includes('trái cây');
         };
+        const isSoup = (d) => {
+            const cat = (d.loai_mon || '').toLowerCase();
+            const name = (d.ten_mon || '').toLowerCase();
+            return !isDessert(d) && (cat.includes('canh') || name.startsWith('canh'));
+        };
+        const isStirFry = (d) => {
+            const cat = (d.loai_mon || '').toLowerCase();
+            const name = (d.ten_mon || '').toLowerCase();
+            return !isDessert(d) && !isSoup(d) && (cat.includes('xào') || cat.includes('rau') || name.includes('xào') || cat.includes('chay'));
+        };
+        const isMainCourse = (d) => !isDessert(d) && !isSoup(d) && !isStirFry(d);
 
-        let selectedMenu = [];
-        let totalDays = Number(days) || 3;
+        const globalMan = allDishes.filter(isMainCourse);
+        const globalXao = allDishes.filter(isStirFry);
+        const globalCanh = allDishes.filter(isSoup);
+        const globalTrangMieng = allDishes.filter(isDessert);
+
+        // 3. Khớp các món ăn với danh sách nguyên liệu người dùng đã chọn
+        let matchedDishes = [];
+        if (ingredients && ingredients.length > 0) {
+            const ingArr = Array.isArray(ingredients) ? ingredients.map(Number).filter(Boolean) : [Number(ingredients)].filter(Boolean);
+            if (ingArr.length > 0) {
+                const placeholders = ingArr.map(() => '?').join(',');
+                const ingRows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingArr);
+                const ingNames = (ingRows || []).map(r => r.ten_nguyen_lieu.split('/')[0].split('(')[0].trim().toLowerCase());
+
+                if (ingNames.length > 0) {
+                    matchedDishes = allDishes.filter(dish => {
+                        const text = `${dish.ten_mon || ''} ${dish.nguyen_lieu_chinh || ''}`.toLowerCase();
+                        return ingNames.some(k => text.includes(k));
+                    });
+                }
+            }
+        }
+
+        const matchedMan = matchedDishes.filter(isMainCourse);
+        const matchedXao = matchedDishes.filter(isStirFry);
+        const matchedCanh = matchedDishes.filter(isSoup);
+        const matchedTrangMieng = matchedDishes.filter(isDessert);
+
+        // 4. Sinh mâm cơm tự động (không trùng lặp món trong ngày)
+        const totalDays = Number(days) || 1;
+        const selectedMenu = [];
+        const usedOverallIds = new Set();
 
         for (let day = 1; day <= totalDays; day++) {
-            // Mỗi ngày có 2 bữa: Bữa Trưa và Bữa Tối, mỗi bữa đủ 4 món
+            const usedTodayIds = new Set();
+
+            const pickDish = (matchedPool, globalPool) => {
+                let pool = matchedPool.filter(d => !usedTodayIds.has(d.id));
+                if (pool.length === 0) pool = globalPool.filter(d => !usedTodayIds.has(d.id));
+                if (pool.length === 0) pool = globalPool.filter(d => !usedOverallIds.has(d.id));
+                if (pool.length === 0) pool = globalPool.length > 0 ? globalPool : (matchedPool.length > 0 ? matchedPool : allDishes);
+
+                const selected = pool[Math.floor(Math.random() * pool.length)];
+                if (selected && selected.id) {
+                    usedTodayIds.add(selected.id);
+                    usedOverallIds.add(selected.id);
+                }
+                return selected;
+            };
+
             selectedMenu.push({
                 ngay: `Ngày ${day}`,
                 bua_trua: {
                     ten_bua: "Bữa Trưa",
-                    mon_man: getRandomDish(poolMan),
-                    mon_xao_ran: getRandomDish(poolXaoRau),
-                    mon_canh: getRandomDish(poolCanh),
-                    trang_mieng: getRandomDish(poolTrangMieng)
+                    mon_man: pickDish(matchedMan, globalMan),
+                    mon_xao_ran: pickDish(matchedXao, globalXao),
+                    mon_canh: pickDish(matchedCanh, globalCanh),
+                    trang_mieng: pickDish(matchedTrangMieng, globalTrangMieng)
                 },
                 bua_toi: {
                     ten_bua: "Bữa Tối",
-                    mon_man: getRandomDish(poolMan),
-                    mon_xao_ran: getRandomDish(poolXaoRau),
-                    mon_canh: getRandomDish(poolCanh),
-                    trang_mieng: getRandomDish(poolTrangMieng)
+                    mon_man: pickDish(matchedMan, globalMan),
+                    mon_xao_ran: pickDish(matchedXao, globalXao),
+                    mon_canh: pickDish(matchedCanh, globalCanh),
+                    trang_mieng: pickDish(matchedTrangMieng, globalTrangMieng)
                 }
             });
         }
@@ -155,8 +192,16 @@ app.post('/api/menu/generate', async (req, res) => {
 // ================= KHỞI ĐỘNG SERVER (DUY NHẤT 1 LẦN) =================
 const PORT = process.env.PORT || 3000; 
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('====================================================');
     console.log(` Server đang chạy tại: http://localhost:${PORT}`);
     console.log('====================================================');
+});
+
+server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+        console.error(`❌ Cổng ${PORT} đang được sử dụng bởi tiến trình khác (Server đã chạy sẵn ngầm)!`);
+    } else {
+        console.error('❌ Lỗi khởi động Server:', err);
+    }
 });

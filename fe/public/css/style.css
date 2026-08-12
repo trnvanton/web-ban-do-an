@@ -117,15 +117,23 @@
 /*** Topbar End ***/
 
 /*** Navbar Start ***/
+.navbar .navbar-nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
 .navbar .navbar-nav .nav-link {
-    padding: 10px 15px;
-    font-size: 16px;
-    transition: .5s;
+    padding: 8px 12px;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: .3s;
 }
 
 .navbar {
-    height: 100px;
-    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    min-height: 80px;
+    border-bottom: 1px solid rgba(0, 0, 0, .05);
 }
 
 .navbar .navbar-nav .nav-link:hover,
@@ -488,6 +496,24 @@
 
 .footer .footer-item .btn-link:hover {
     color: var(--bs-secondary) !important;
+}
+
+/* Card Product Styling */
+.card-product-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-product-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+}
+.img-hover-zoom {
+    transition: transform 0.3s ease;
+}
+.card-product-hover:hover .img-hover-zoom {
+    transform: scale(1.06);
+}
+.hover-primary:hover {
+    color: var(--bs-primary) !important;
 }
 
 .footer .footer-item p.mb-4 {
