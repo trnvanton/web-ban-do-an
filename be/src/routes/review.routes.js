@@ -6,7 +6,7 @@ const { sanitize } = require('../middleware/validate');
 
 // POST /api/danh-gia - Gửi đánh giá cho sản phẩm
 router.post('/danh-gia', async (req, res) => {
-    const user = getAuthUser(req);
+    const user = await getAuthUser(req);
     if (!user) {
         return res.status(401).json({ success: false, message: 'Bạn cần đăng nhập để gửi đánh giá!' });
     }
@@ -55,13 +55,13 @@ router.post('/danh-gia', async (req, res) => {
 
         if (existing && existing.length > 0) {
             await query(
-                "UPDATE danh_gia SET so_sao = ?, noi_dung = ?, ngay_danh_gia = NOW() WHERE id = ?",
+                "UPDATE danh_gia SET so_sao = ?, noi_dung = ?, ngay_danh_gia = CURRENT_TIMESTAMP WHERE id = ?",
                 [stars, content, existing[0].id]
             );
             return res.json({ success: true, message: 'Đã cập nhật đánh giá thành công!' });
         } else {
             await query(
-                "INSERT INTO danh_gia (user_id, product_id, don_hang_id, so_sao, noi_dung, ten_user, ngay_danh_gia) VALUES (?, ?, ?, ?, ?, ?, NOW())",
+                "INSERT INTO danh_gia (user_id, product_id, don_hang_id, so_sao, noi_dung, ten_user, ngay_danh_gia) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)",
                 [user.id, pId, dId, stars, content, userName]
             );
             return res.json({ success: true, message: 'Đã gửi đánh giá thành công! Cảm ơn bạn.' });
@@ -108,7 +108,7 @@ router.get('/danh-gia/san-pham/:productId', async (req, res) => {
 
 // GET /api/user/danh-gia - Lấy danh sách đánh giá của user
 router.get('/user/danh-gia', async (req, res) => {
-    const user = getAuthUser(req);
+    const user = await getAuthUser(req);
     if (!user) {
         return res.status(401).json({ success: false, message: 'Bạn chưa đăng nhập' });
     }

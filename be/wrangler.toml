@@ -1,0 +1,9 @@
+name = "fruitables-backend"
+main = "worker.js"
+compatibility_date = "2024-09-25"
+compatibility_flags = [ "nodejs_compat" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fruitables-d1"
+database_id = "e0b48c61-c005-468b-97c9-2a1813eee7d3"

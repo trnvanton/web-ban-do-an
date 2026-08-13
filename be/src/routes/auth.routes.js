@@ -12,60 +12,66 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // ================= ĐĂNG NHẬP =================
 router.post('/dang-nhap', async (req, res) => {
-    const email = sanitize(req.body.email);
-    const mat_khau = req.body.mat_khau || '';
+    const rawEmail = req.body ? req.body.email : '';
+    const email = sanitize(rawEmail).toLowerCase();
+    const mat_khau = (req.body ? req.body.mat_khau : '') || '';
 
     if (!isEmail(email)) return fail(res, 400, 'Email không hợp lệ!');
     if (!isRequired(mat_khau)) return fail(res, 400, 'Vui lòng nhập mật khẩu!');
 
     try {
         const results = await query(
-            'SELECT id, ho_ten, email, mat_khau, vai_tro FROM tai_khoan WHERE email = ? LIMIT 1',
+            'SELECT id, ho_ten, email, mat_khau, vai_tro FROM tai_khoan WHERE LOWER(email) = ? LIMIT 1',
             [email]
         );
 
-        if (results.length === 0) {
-            // Trả lỗi chung chung - không tiết lộ email có tồn tại hay không
-            return fail(res, 401, 'Email hoặc mật khẩu không chính xác!');
+        if (!results || results.length === 0) {
+            return fail(res, 400, 'Email hoặc mật khẩu không chính xác!');
         }
 
         const user = results[0];
+        const inputPass = String(mat_khau).trim();
+        const dbPass = String(user.mat_khau || '').trim();
+
         let valid = false;
 
-        // Mật khẩu đã hash bằng bcrypt (chuẩn mới)
-        if (user.mat_khau && user.mat_khau.startsWith('$2')) {
-            valid = await bcrypt.compare(mat_khau, user.mat_khau);
-        } else if (user.mat_khau === mat_khau) {
-            // MẬT KHẨU CŨ LƯU TRẦN (thời kỳ đầu) -> vẫn cho đăng nhập
-            // nhưng lập tức tự động nâng cấp thành hash bcrypt
+        // 1. Kiểm tra nếu DB lưu dạng bcrypt hash ($2a$, $2b$)
+        if (dbPass.startsWith('$2')) {
+            try {
+                valid = bcrypt.compareSync(inputPass, dbPass) || bcrypt.compareSync(mat_khau, dbPass);
+            } catch (e) {
+                valid = false;
+            }
+        }
+
+        // 2. Kiểm tra nếu DB lưu dạng plain text (mật khẩu trần)
+        if (!valid && (dbPass === inputPass || dbPass === mat_khau)) {
             valid = true;
-            const hash = await bcrypt.hash(mat_khau, 10);
-            await query('UPDATE tai_khoan SET mat_khau = ? WHERE id = ?', [hash, user.id]);
         }
 
         if (!valid) {
-            return fail(res, 401, 'Email hoặc mật khẩu không chính xác!');
+            return fail(res, 400, 'Email hoặc mật khẩu không chính xác!');
         }
 
-        // Cấp token qua cookie httpOnly (JS client không đọc được)
-        setAuthCookie(res, signToken(user));
+        const token = await signToken(user);
+        setAuthCookie(res, token);
 
-        // KHÔNG bao giờ trả mat_khau về client
         ok(res, 'Đăng nhập thành công!', {
             user: { id: user.id, ho_ten: user.ho_ten, email: user.email, vai_tro: user.vai_tro },
             redirectUrl: user.vai_tro === 'admin' ? '/admin.html' : '/index.html'
         });
     } catch (err) {
-        console.error('❌ Lỗi đăng nhập:', err);
+        console.error('❌ [LOGIN] Lỗi đăng nhập:', err);
         fail(res, 500, 'Lỗi máy chủ! Vui lòng thử lại.');
     }
 });
 
 // ================= ĐĂNG KÝ =================
 router.post('/dang-ky', async (req, res) => {
-    const ho_ten = sanitize(req.body.ho_ten);
-    const email = sanitize(req.body.email);
-    const mat_khau = req.body.mat_khau || '';
+    const ho_ten = sanitize(req.body ? req.body.ho_ten : '');
+    const rawEmail = req.body ? req.body.email : '';
+    const email = sanitize(rawEmail).toLowerCase();
+    const mat_khau = (req.body ? req.body.mat_khau : '') || '';
 
     if (!isRequired(ho_ten)) return fail(res, 400, 'Vui lòng nhập họ và tên!');
     if (!isEmail(email)) return fail(res, 400, 'Email không hợp lệ!');
@@ -73,10 +79,11 @@ router.post('/dang-ky', async (req, res) => {
 
     try {
         // Kiểm tra email đã tồn tại chưa
-        const dup = await query('SELECT id FROM tai_khoan WHERE email = ? LIMIT 1', [email]);
+        const dup = await query('SELECT id FROM tai_khoan WHERE LOWER(email) = ? LIMIT 1', [email]);
         if (dup.length > 0) return fail(res, 409, 'Email này đã được đăng ký!');
 
-        const hash = await bcrypt.hash(mat_khau, 10);
+        const isCloudflare = typeof globalThis.WebSocketPair !== 'undefined' || !!globalThis.env;
+        const hash = isCloudflare ? mat_khau : bcrypt.hashSync(mat_khau, 10);
         // Không cho đăng ký tài khoản admin từ form
         const result = await query(
             'INSERT INTO tai_khoan (ho_ten, email, mat_khau, vai_tro) VALUES (?, ?, ?, ?)',
@@ -84,7 +91,8 @@ router.post('/dang-ky', async (req, res) => {
         );
 
         const user = { id: result.insertId, ho_ten, email, vai_tro: 'khach' };
-        setAuthCookie(res, signToken(user));
+        const token = await signToken(user);
+        setAuthCookie(res, token);
 
         ok(res, 'Đăng ký thành công!', {
             user,
@@ -99,7 +107,7 @@ router.post('/dang-ky', async (req, res) => {
 // ================= LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI (từ cookie) =================
 router.get('/me', async (req, res) => {
     const { getAuthUser } = require('../middleware/auth');
-    const tokenUser = getAuthUser(req);
+    const tokenUser = await getAuthUser(req);
     if (!tokenUser) return fail(res, 401, 'Chưa đăng nhập!');
 
     try {
@@ -133,7 +141,7 @@ router.put('/user/cap-nhat', requireAuth, async (req, res) => {
             if (!isPassword(mat_khau_moi)) {
                 return fail(res, 400, 'Mật khẩu mới phải có ít nhất 6 ký tự!');
             }
-            const hash = await bcrypt.hash(mat_khau_moi, 10);
+            const hash = bcrypt.hashSync(mat_khau_moi, 10);
             await query('UPDATE tai_khoan SET ho_ten = ?, mat_khau = ? WHERE id = ?', [ho_ten, hash, req.user.id]);
         } else {
             await query('UPDATE tai_khoan SET ho_ten = ? WHERE id = ?', [ho_ten, req.user.id]);

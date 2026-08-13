@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const path = require('path');
 
 const { query } = require('./src/config/db');
+const { signToken, setAuthCookie } = require('./src/middleware/auth');
 const authRoutes = require('./src/routes/auth.routes');
 const productRoutes = require('./src/routes/product.routes');
 const dishRoutes = require('./src/routes/dish.routes');
@@ -20,7 +21,14 @@ const reviewRoutes = require('./src/routes/review.routes');
 
 const app = express();
 
-// ================= CẤU HÌNH AN TOÀN CƠ BẢN =================
+// Middleware xử lý cho môi trường Serverless (Cloudflare Workers)
+app.use((req, res, next) => {
+    if (req.body !== undefined && typeof req.body === 'object') {
+        req._body = true;
+    }
+    next();
+});
+
 // Helmet: tự động set các header bảo mật HTTP (X-Frame-Options, CSP, ...)
 app.use(helmet({
     contentSecurityPolicy: false // Tắt CSP vì template dùng inline script
@@ -29,46 +37,54 @@ app.use(helmet({
 // Đọc cookie (phục vụ xác thực)
 app.use(cookieParser());
 
-// Body parser (giới hạn payload 1MB - chống request khổng lồ)
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// Body parser (chỉ dùng trên môi trường Node.js local; trên Cloudflare Workers body đã được worker.js parse sẵn)
+if (typeof globalThis.WebSocketPair === 'undefined' && !globalThis.env) {
+    app.use(express.json({ limit: '1mb' }));
+    app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+}
 
-// Ghi log mọi request
-app.use(morgan('dev'));
+// Ghi log request (chỉ bật trên môi trường Node.js local, tắt ở Cloudflare Workers vì EvalError)
+if (typeof globalThis.WebSocketPair === 'undefined' && !globalThis.env) {
+    app.use(morgan('dev'));
+}
 
-// Ảnh upload được lưu trong be/public/uploads, phục vụ tại /uploads
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// Ảnh upload được lưu trong be/public/uploads, phục vụ tại /uploads (nếu ở môi trường có filesystem)
+if (typeof __dirname !== 'undefined') {
+    app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+}
 
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://organicfood-menu.site',
-    'https://www.organicfood-menu.site',
-    process.env.CLIENT_URL
-].filter(Boolean);
 
+// Cấu hình CORS toàn diện (cho phép Vercel, localhost và mọi origin với credentials)
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
-            callback(null, true);
-        } else {
-            callback(null, true);
-        }
-    },
-    credentials: true
+    origin: true, // Tự động echo Origin của request, hỗ trợ credentials = true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept']
 }));
 // ================= CHỐNG BRUTE-FORCE (tấn công đoán mật khẩu) =================
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 phút
-    max: 20,                  // tối đa 20 lần đăng nhập/đăng ký mỗi IP
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { success: false, message: 'Quá nhiều lần thử! Vui lòng đợi 15 phút rồi thử lại.' }
-});
-app.use('/api/dang-nhap', authLimiter);
-app.use('/api/dang-ky', authLimiter);
+if (typeof globalThis.WebSocketPair === 'undefined' && process.env.DB_DRIVER !== 'd1') {
+    const authLimiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 phút
+        max: 20,                  // tối đa 20 lần đăng nhập/đăng ký mỗi IP
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { success: false, message: 'Quá nhiều lần thử! Vui lòng đợi 15 phút rồi thử lại.' }
+    });
+    app.use('/api/dang-nhap', authLimiter);
+    app.use('/api/dang-ky', authLimiter);
+}
+
 
 // ================= ROUTES =================
+app.get('/api/test-db', async (req, res) => {
+    try {
+        const users = await query('SELECT id, ho_ten, email, vai_tro FROM tai_khoan');
+        res.json({ success: true, count: users.length, users });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+});
+
 app.use('/api', authRoutes);
 app.use('/api', productRoutes);
 app.use('/api', dishRoutes);
@@ -203,19 +219,14 @@ app.post('/api/menu/generate', async (req, res) => {
     }
 });
 
-// ================= KHỞI ĐỘNG SERVER (DUY NHẤT 1 LẦN) =================
-const PORT = process.env.PORT || 3000; 
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000; 
+    app.listen(PORT, () => {
+        console.log('====================================================');
+        console.log(` Server đang chạy tại: http://localhost:${PORT}`);
+        console.log('====================================================');
+    });
+}
 
-const server = app.listen(PORT, () => {
-    console.log('====================================================');
-    console.log(` Server đang chạy tại: http://localhost:${PORT}`);
-    console.log('====================================================');
-});
-
-server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.error(`❌ Cổng ${PORT} đang được sử dụng bởi tiến trình khác (Server đã chạy sẵn ngầm)!`);
-    } else {
-        console.error('❌ Lỗi khởi động Server:', err);
-    }
-});
+module.exports = app;
+

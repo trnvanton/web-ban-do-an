@@ -98,12 +98,12 @@ export default function ShopDetail() {
         );
     }
 
-    if (error) {
+    if (error || !product) {
         return (
             <div className="container-fluid py-5 mt-5">
                 <div className="container py-5 text-center">
                     <h3 className="text-danger mb-3">Không tải được sản phẩm</h3>
-                    <p className="text-muted mb-4">{esc(error)}</p>
+                    <p className="text-muted mb-4">{esc(error || 'Sản phẩm bạn tìm kiếm không tồn tại hoặc đã bị xóa.')}</p>
                     <Link to="/shop" className="btn btn-primary rounded-pill px-4 py-2">
                         <i className="fa fa-arrow-left me-2"></i>Quay lại cửa hàng
                     </Link>

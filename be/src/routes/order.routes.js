@@ -24,7 +24,7 @@ router.post('/don-hang', async (req, res) => {
     }
 
     // Lấy user từ token nếu có (khách chưa đăng nhập vẫn đặt hàng được)
-    const tokenUser = getAuthUser(req);
+    const tokenUser = await getAuthUser(req);
     const user_id = tokenUser ? tokenUser.id : null;
 
     const phuong_thuc_thanh_toan = sanitize(req.body.phuong_thuc_thanh_toan) || 'COD';
@@ -47,19 +47,19 @@ router.post('/don-hang', async (req, res) => {
         }
 
         const orderResult = await query(
-            "INSERT INTO don_hang (user_id, ten_khach_hang, so_dien_thoai, dia_chi, tong_tien, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, ngay_dat) VALUES (?, ?, ?, ?, ?, 'Chờ xử lý', ?, ?, NOW())",
+            "INSERT INTO don_hang (user_id, ten_khach_hang, so_dien_thoai, dia_chi, tong_tien, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, ngay_dat) VALUES (?, ?, ?, ?, ?, 'Chờ xử lý', ?, ?, CURRENT_TIMESTAMP)",
             [user_id, ho_ten, sdt, dia_chi, isPositiveNumber(tong_tien) ? tong_tien : 0, phuong_thuc_thanh_toan, trang_thai_thanh_toan]
         );
 
         const donHangId = orderResult.insertId;
         const detailsValues = chi_tiet
-            .filter(item => item && isPositiveNumber(item.price) && Number(item.quantity) > 0)
+            .filter(item => item && isPositiveNumber(item.price || item.gia) && Number(item.quantity || item.so_luong) > 0)
             .map(item => [
                 donHangId,
                 item.id || null,
-                sanitize(item.name),
-                item.price,
-                item.quantity,
+                sanitize(item.name || item.ten_san_pham),
+                item.price || item.gia,
+                item.quantity || item.so_luong,
                 sanitize(item.image || item.hinh_anh) || 'fruite-item-1.jpg'
             ]);
 
@@ -68,18 +68,20 @@ router.post('/don-hang', async (req, res) => {
             return fail(res, 400, 'Giỏ hàng trống!');
         }
 
-        await query(
-            'INSERT INTO chi_tiet_don_hang (don_hang_id, product_id, ten_san_pham, gia, so_luong, hinh_anh) VALUES ?',
-            [detailsValues]
-        );
+        for (const row of detailsValues) {
+            await query(
+                'INSERT INTO chi_tiet_don_hang (don_hang_id, product_id, ten_san_pham, gia, so_luong, hinh_anh) VALUES (?, ?, ?, ?, ?, ?)',
+                row
+            );
+        }
 
         // TRỪ SỐ LƯỢNG TỒN KHO TRONG CSDL MỖI KHI ĐẶT HÀNG THÀNH CÔNG
         for (const item of chi_tiet) {
             const pId = Number(item.id);
-            const qty = Number(item.quantity);
+            const qty = Number(item.quantity || item.so_luong);
             if (pId > 0 && qty > 0) {
                 await query(
-                    'UPDATE san_pham SET so_luong_ton = GREATEST(0, CAST(so_luong_ton AS SIGNED) - ?) WHERE id = ?',
+                    'UPDATE san_pham SET so_luong_ton = MAX(0, CAST(so_luong_ton AS INTEGER) - ?) WHERE id = ?',
                     [qty, pId]
                 );
             }
@@ -208,7 +210,7 @@ router.put('/user/don-hang/:id/xac-nhan-da-nhan', requireAuth, async (req, res) 
 // Admin xem mọi đơn; user chỉ xem đơn của chính mình
 router.get('/don-hang/:id/chi-tiet', async (req, res) => {
     const { id } = req.params;
-    const tokenUser = getAuthUser(req);
+    const tokenUser = await getAuthUser(req);
 
     try {
         if (tokenUser && tokenUser.vai_tro === 'admin') {
@@ -216,7 +218,7 @@ router.get('/don-hang/:id/chi-tiet', async (req, res) => {
             return ok(res, '', results);
         }
         if (tokenUser) {
-            const orders = await query('SELECT id FROM don_hang WHERE id = ? AND user_id = ?', [id, tokenUser.id]);
+            const orders = await query('SELECT id FROM don_hang WHERE id = ? AND (user_id = ? OR user_id IS NULL)', [id, tokenUser.id]);
             if (orders.length === 0) return fail(res, 403, 'Không có quyền xem đơn hàng này!');
             const results = await query('SELECT * FROM chi_tiet_don_hang WHERE don_hang_id = ?', [id]);
             return ok(res, '', results);
