@@ -4,6 +4,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { ok, fail } = require('../utils/response');
 const { sanitize, isRequired } = require('../middleware/validate');
+const { filterAndRankDishes } = require('../utils/ingredientMatcher');
 
 const router = express.Router();
 
@@ -95,11 +96,7 @@ router.get('/goi-y-mon-an', async (req, res) => {
             });
 
             if (targetIngNames.length > 0) {
-                const searchKeys = targetIngNames.map(n => n.split('/')[0].split('(')[0].trim().toLowerCase());
-                results = results.filter(dish => {
-                    const text = `${dish.ten_mon || ''} ${dish.nguyen_lieu_chinh || ''}`.toLowerCase();
-                    return searchKeys.some(k => text.includes(k));
-                });
+                results = filterAndRankDishes(results, targetIngNames);
             }
         }
 

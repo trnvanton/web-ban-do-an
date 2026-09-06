@@ -18,6 +18,7 @@ const addressRoutes = require('./src/routes/address.routes');
 const userRoutes = require('./src/routes/user.routes');
 const uploadRoutes = require('./src/routes/upload.routes');
 const reviewRoutes = require('./src/routes/review.routes');
+const { filterAndRankDishes } = require('./src/utils/ingredientMatcher');
 
 const app = express();
 
@@ -165,13 +166,10 @@ app.post('/api/menu/generate', async (req, res) => {
             if (ingArr.length > 0) {
                 const placeholders = ingArr.map(() => '?').join(',');
                 const ingRows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingArr);
-                const ingNames = (ingRows || []).map(r => r.ten_nguyen_lieu.split('/')[0].split('(')[0].trim().toLowerCase());
+                const targetIngNames = (ingRows || []).map(r => r.ten_nguyen_lieu);
 
-                if (ingNames.length > 0) {
-                    matchedDishes = allDishes.filter(dish => {
-                        const text = `${dish.ten_mon || ''} ${dish.nguyen_lieu_chinh || ''}`.toLowerCase();
-                        return ingNames.some(k => text.includes(k));
-                    });
+                if (targetIngNames.length > 0) {
+                    matchedDishes = filterAndRankDishes(allDishes, targetIngNames);
                 }
             }
         }
