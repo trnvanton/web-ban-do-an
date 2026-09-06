@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 import { api } from '../api';
 import { imgUrl, esc, fmtVND } from '../utils/img';
 
@@ -68,6 +69,7 @@ function Modal({ show, onClose, id, size, children }) {
 
 export default function Admin() {
     const { user, logout } = useAuth();
+    const dialog = useDialog();
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -204,7 +206,13 @@ export default function Admin() {
     };
 
     const deleteProduct = async (id) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi CSDL?')) return;
+        const ok = await dialog.confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi CSDL?', {
+            title: 'Xóa Sản Phẩm',
+            type: 'error',
+            confirmText: 'Xóa vĩnh viễn',
+            cancelText: 'Hủy'
+        });
+        if (!ok) return;
         try {
             await api.del('/api/admin/xoa-san-pham/' + id);
             alert('Đã xóa sản phẩm thành công!');
@@ -274,7 +282,13 @@ export default function Admin() {
     };
 
     const deleteDish = async (id) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa món ăn này khỏi hệ thống gợi ý?')) return;
+        const ok = await dialog.confirm('Bạn có chắc chắn muốn xóa món ăn này khỏi hệ thống gợi ý?', {
+            title: 'Xóa Món Ăn',
+            type: 'error',
+            confirmText: 'Xóa món ăn',
+            cancelText: 'Hủy'
+        });
+        if (!ok) return;
         try {
             await api.del('/api/admin/xoa-mon-an/' + id);
             alert('Đã xóa món ăn!');
@@ -296,7 +310,13 @@ export default function Admin() {
     };
 
     const confirmPayment = async (id) => {
-        if (!confirm(`Xác nhận Admin đã kiểm tra tài khoản và nhận đủ tiền chuyển khoản cho đơn hàng #DH${id}?`)) return;
+        const ok = await dialog.confirm(`Xác nhận Admin đã kiểm tra tài khoản và nhận đủ tiền chuyển khoản cho đơn hàng #DH${id}?`, {
+            title: 'Xác Nhận Nhận Tiền',
+            type: 'confirm',
+            confirmText: 'Đã nhận tiền',
+            cancelText: 'Hủy'
+        });
+        if (!ok) return;
         try {
             await api.put('/api/admin/don-hang/' + id + '/xac-nhan-thanh-toan');
             alert('✅ Đã xác nhận thanh toán tiền chuyển khoản thành công!');
@@ -324,7 +344,13 @@ export default function Admin() {
     // ---- ĐĂNG XUẤT ----
     const handleLogout = async (e) => {
         e.preventDefault();
-        if (!confirm('Bạn có chắc chắn muốn đăng xuất khỏi trang quản trị?')) return;
+        const ok = await dialog.confirm('Bạn có chắc chắn muốn đăng xuất khỏi trang quản trị?', {
+            title: 'Đăng Xuất Admin',
+            type: 'warning',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Ở lại'
+        });
+        if (!ok) return;
         await logout();
         navigate('/');
     };

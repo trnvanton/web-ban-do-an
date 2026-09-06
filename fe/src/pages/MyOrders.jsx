@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { imgUrl, esc, fmtVND } from '../utils/img';
+import { useDialog } from '../contexts/DialogContext';
 
 function statusBadge(trang_thai) {
     const s = trang_thai || 'Chờ xử lý';
@@ -20,6 +21,7 @@ function statusBadge(trang_thai) {
 }
 
 export default function MyOrders() {
+    const dialog = useDialog();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('ALL'); // ALL, Chờ xử lý, Đang giao, Đã giao, Đã hoàn thành, Đã hủy
@@ -45,7 +47,13 @@ export default function MyOrders() {
     }, []);
 
     const confirmReceivedOrder = async (orderId) => {
-        if (!confirm('Bạn xác nhận đã nhận đủ hàng và sản phẩm tươi ngon?')) return;
+        const ok = await dialog.confirm('Bạn xác nhận đã nhận đủ hàng và sản phẩm tươi ngon?', {
+            title: 'Xác Nhận Đã Nhận Hàng',
+            type: 'success',
+            confirmText: 'Đã nhận đủ hàng',
+            cancelText: 'Chưa nhận'
+        });
+        if (!ok) return;
         try {
             const res = await api.put(`/api/user/don-hang/${orderId}/xac-nhan-da-nhan`);
             alert(res.message || '🎉 Đã xác nhận nhận hàng thành công!');

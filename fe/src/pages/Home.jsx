@@ -7,6 +7,7 @@ import 'swiper/css/navigation';
 import { api } from '../api';
 import { imgUrl, esc } from '../utils/img';
 import ProductCard from '../components/ProductCard';
+import RecipeDetailModal from '../components/RecipeDetailModal';
 
 export default function Home() {
     const [products, setProducts] = useState([]);
@@ -15,6 +16,7 @@ export default function Home() {
     const [error, setError] = useState('');
     const [activeCategory, setActiveCategory] = useState('Tất cả');
     const [keyword, setKeyword] = useState('');
+    const [selectedDish, setSelectedDish] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -39,7 +41,20 @@ export default function Home() {
         return () => { cancelled = true; };
     }, []);
 
-    const categories = ['Tất cả', ...new Set(products.map(p => p.danh_muc).filter(Boolean))];
+    const PREFERRED_CAT_ORDER = [
+        'Tất cả',
+        'Món Chế Biến Sẵn',
+        'Set Nấu Ăn (Meal-kit)',
+        'Đồ Uống & Tráng Miệng',
+        'Nông Sản & Nguyên Liệu'
+    ];
+
+    const availableCats = [...new Set(products.map(p => p.danh_muc).filter(Boolean))];
+    const categories = [
+        'Tất cả',
+        ...PREFERRED_CAT_ORDER.filter(c => c !== 'Tất cả' && availableCats.includes(c)),
+        ...availableCats.filter(c => !PREFERRED_CAT_ORDER.includes(c))
+    ];
     const filteredProducts = activeCategory === 'Tất cả'
         ? products
         : products.filter(p => p.danh_muc === activeCategory);
@@ -76,13 +91,13 @@ export default function Home() {
                 <div className="container py-5">
                     <div className="row g-5 align-items-center">
                         <div className="col-md-12 col-lg-7">
-                            <h4 className="mb-3 text-secondary">100% Thực Phẩm Hữu Cơ</h4>
-                            <h1 className="mb-5 display-3 text-primary">Rau Củ &amp; Trái Cây Tươi Sạch VietGAP</h1>
+                            <h4 className="mb-3 text-secondary">Nền Tảng Đặt Món &amp; Gợi Ý Thực Đơn Thông Minh</h4>
+                            <h1 className="mb-5 display-3 text-primary">Món Ăn Nóng Sốt &amp; Set Nấu Ăn Tận Nơi</h1>
                             <form className="position-relative mx-auto" onSubmit={handleSearch}>
                                 <input
                                     className="form-control border-2 border-secondary w-75 py-3 px-4 rounded-pill"
                                     type="text"
-                                    placeholder="Tìm kiếm nông sản..."
+                                    placeholder="Tìm món ăn, set meal-kit, đồ uống..."
                                     value={keyword}
                                     onChange={(e) => setKeyword(e.target.value)}
                                 />
@@ -174,46 +189,68 @@ export default function Home() {
             {/* Fruits Shop Start */}
             <div className="container-fluid fruite py-5">
                 <div className="container py-5">
-                    <div className="tab-class text-center">
-                        <div className="row g-4 align-items-center mb-4">
-                            <div className="col-lg-4 text-start">
-                                <h1 className="mb-0 fw-bold">Sản Phẩm Hữu Cơ</h1>
-                            </div>
-                            <div className="col-lg-8">
-                                <div className="d-flex flex-nowrap justify-content-lg-end align-items-center gap-2 overflow-auto pb-2 px-1 category-scroll-bar" style={{ scrollbarWidth: 'thin' }}>
-                                    {categories.map(c => {
-                                        const isActive = activeCategory === c;
-                                        return (
-                                            <button
-                                                key={c}
-                                                type="button"
-                                                className={`btn rounded-pill text-nowrap px-4 py-2 flex-shrink-0 transition-all ${
-                                                    isActive 
-                                                        ? 'btn-primary text-white shadow-sm fw-bold' 
-                                                        : 'btn-light text-dark border hover-shadow'
-                                                }`}
-                                                onClick={() => setActiveCategory(c)}
-                                            >
-                                                {esc(c)}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                    {/* Header: Title + Subtitle centered */}
+                    <div className="text-center mb-4">
+                        <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-1.5 rounded-pill fw-bold text-uppercase mb-2">
+                            <i className="fas fa-utensils me-1"></i> Thực Đơn &amp; Món Ăn Bán Chạy
+                        </span>
+                        <h1 className="display-6 fw-bold text-dark mb-2">Thực Đơn Đặt Món Trực Tuyến</h1>
+                        <p className="text-muted mx-auto" style={{ maxWidth: 620 }}>
+                            Món ăn chế biến sẵn nóng sốt giao liền, set nguyên liệu Meal-kit tự nấu thông minh và đồ uống thanh mát mỗi ngày.
+                        </p>
+                    </div>
+
+                    {/* Category Filter Pills: Centered segmented capsule */}
+                    <div className="d-flex justify-content-center mb-5">
+                        <div className="d-inline-flex flex-wrap justify-content-center align-items-center gap-2 p-1.5 bg-light rounded-pill border shadow-sm" style={{ maxWidth: '100%' }}>
+                            {categories.map(c => {
+                                const isActive = activeCategory === c;
+                                const iconMap = {
+                                    'Tất cả': 'fa-border-all',
+                                    'Món Chế Biến Sẵn': 'fa-fire-burner',
+                                    'Set Nấu Ăn (Meal-kit)': 'fa-kitchen-set',
+                                    'Đồ Uống & Tráng Miệng': 'fa-glass-water',
+                                    'Nông Sản & Nguyên Liệu': 'fa-leaf'
+                                };
+                                const icon = iconMap[c] || 'fa-utensils';
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        className={`btn rounded-pill px-3.5 py-2 fw-bold text-nowrap transition-all d-flex align-items-center gap-2 ${
+                                            isActive 
+                                                ? 'btn-primary text-white shadow-sm' 
+                                                : 'btn-transparent text-secondary border-0 hover-bg-white'
+                                        }`}
+                                        onClick={() => setActiveCategory(c)}
+                                        style={{ fontSize: '0.92rem' }}
+                                    >
+                                        <i className={`fas ${icon}`}></i>
+                                        <span>{c}</span>
+                                        {isActive && (
+                                            <span className="badge bg-white text-primary rounded-pill small ms-1" style={{ fontSize: '0.72rem' }}>
+                                                {filteredProducts.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
+                    </div>
 
                         <div className="product-slider-wrapper">
                             {filteredProducts.length === 0 ? (
                                 <div className="w-100 text-center py-5">
-                                    <p className="text-muted fs-5">Không có sản phẩm nào thuộc danh mục này.</p>
+                                    <p className="text-muted fs-5">Không có món ăn nào thuộc danh mục này.</p>
                                 </div>
                             ) : (
                                 <Swiper
                                     key={activeCategory}
                                     modules={[Navigation]}
+                                    navigation={true}
+                                    grabCursor={true}
                                     slidesPerView={1}
                                     spaceBetween={24}
-                                    navigation={{ nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' }}
                                     breakpoints={{
                                         576: { slidesPerView: 2, spaceBetween: 20 },
                                         768: { slidesPerView: 3, spaceBetween: 20 },
@@ -228,9 +265,6 @@ export default function Home() {
                                     ))}
                                 </Swiper>
                             )}
-                            <div className="swiper-button-prev"></div>
-                            <div className="swiper-button-next"></div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -445,52 +479,123 @@ export default function Home() {
             {/* Fact End */}
 
             {/* Testimonial Start (Hiển thị Món Ăn Gợi Ý từ CSDL) */}
-            <div className="container-fluid testimonial py-5">
-                <div className="container py-5">
-                    <div className="testimonial-header text-center">
-                        <h4 className="text-primary">Gợi Ý Món Ăn Ngon</h4>
-                        <h1 className="display-5 mb-5 text-dark">Thực Đơn Chế Biến Hàng Ngày</h1>
+            <div className="container-fluid testimonial py-5 bg-light bg-opacity-50">
+                <div className="container py-4">
+                    <div className="testimonial-header text-center mb-5">
+                        <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase mb-2">
+                            <i className="fas fa-hat-chef me-1"></i> Gợi Ý Món Ngon Hàng Ngày
+                        </span>
+                        <h1 className="display-6 fw-bold text-dark mb-2">Hôm Nay Bạn Muốn Nấu Món Gì?</h1>
+                        <p className="text-muted mx-auto" style={{ maxWidth: 650 }}>
+                            Khám phá các công thức nấu ăn chuẩn đầu bếp, hướng dẫn chi tiết từng bước với đầy đủ định lượng và mẹo nhà bếp tinh tế.
+                        </p>
                     </div>
+
                     <div className="row g-4" id="dishes-recommend-container">
                         {dishes.length === 0 ? (
-                            <div className="col-12 text-center text-muted">
+                            <div className="col-12 text-center text-muted py-4">
                                 <p>Chưa có món ăn gợi ý nào trong hệ thống.</p>
                             </div>
                         ) : (
-                            dishes.slice(0, 6).map(d => (
-                                <div className="col-md-6 col-lg-4" key={d.id}>
-                                    <div className="testimonial-item bg-light rounded p-4 border h-100 d-flex flex-column justify-content-between">
-                                        <div>
-                                            <div className="d-flex align-items-center mb-3">
+                            dishes.slice(0, 6).map(d => {
+                                const totalTime = (d.thoi_gian_chuan_bi || 10) + (d.thoi_gian_nau || 15);
+                                const diffColors = {
+                                    'Dễ': 'bg-success',
+                                    'Trung bình': 'bg-warning text-dark',
+                                    'Khó': 'bg-danger'
+                                };
+                                const diffBadge = diffColors[d.do_kho] || 'bg-success';
+
+                                return (
+                                    <div className="col-md-6 col-lg-4" key={d.id}>
+                                        <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white d-flex flex-column" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
+                                            {/* Dish Thumbnail */}
+                                            <div className="position-relative" style={{ height: 200, overflow: 'hidden' }}>
                                                 <img
                                                     src={imgUrl(d.hinh_anh)}
-                                                    className="img-fluid rounded-circle me-3"
-                                                    style={{ width: 70, height: 70, objectFit: 'cover' }}
-                                                    alt={d.ten_mon}
+                                                    className="w-100 h-100"
+                                                    style={{ objectFit: 'cover' }}
+                                                    alt={esc(d.ten_mon)}
                                                 />
-                                                <div>
-                                                    <h4 className="text-dark mb-1 fs-5 fw-bold">{esc(d.ten_mon)}</h4>
-                                                    <span className="text-muted small">{esc(d.nguyen_lieu_chinh)}</span>
-                                                    {d.loai_mon && (
-                                                        <div>
-                                                            <span className="badge bg-warning text-dark mt-1">{esc(d.loai_mon)}</span>
-                                                        </div>
-                                                    )}
+                                                <div className="position-absolute top-0 start-0 m-3">
+                                                    <span className="badge rounded-pill bg-dark bg-opacity-75 text-white px-2.5 py-1.5 shadow-sm small">
+                                                        <i className="fas fa-utensils me-1"></i> {esc(d.loai_mon || 'Món mặn')}
+                                                    </span>
                                                 </div>
+                                                {d.do_kho && (
+                                                    <div className="position-absolute top-0 end-0 m-3">
+                                                        <span className={`badge rounded-pill px-2.5 py-1.5 shadow-sm small ${diffBadge}`}>
+                                                            {d.do_kho}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <p className="text-muted small mb-0"><strong>Công thức:</strong> {esc(d.cong_thuc || 'Chưa cập nhật chi tiết cách làm.')}</p>
-                                        </div>
-                                        <div className="text-start mt-3">
-                                            <Link to="/goi-y-mon-an" className="btn btn-primary rounded-pill px-4 py-2">Xem</Link>
+
+                                            {/* Dish Body */}
+                                            <div className="p-4 d-flex flex-column flex-grow-1">
+                                                <h5 className="fw-bold text-dark mb-2 text-truncate" title={d.ten_mon}>
+                                                    {esc(d.ten_mon)}
+                                                </h5>
+
+                                                {/* Meta Chips */}
+                                                <div className="d-flex flex-wrap gap-2 mb-3">
+                                                    <span className="badge bg-light text-secondary border px-2.5 py-1 rounded-pill small">
+                                                        <i className="fas fa-clock text-primary me-1"></i> {totalTime} phút
+                                                    </span>
+                                                    <span className="badge bg-light text-secondary border px-2.5 py-1 rounded-pill small">
+                                                        <i className="fas fa-user-friends text-success me-1"></i> {d.khau_phan || '2 - 3 người'}
+                                                    </span>
+                                                </div>
+
+                                                {/* Description or Ingredients */}
+                                                <p
+                                                    className="text-muted small mb-3 flex-grow-1"
+                                                    style={{
+                                                        display: '-webkit-box',
+                                                        WebkitLineClamp: 2,
+                                                        WebkitBoxOrient: 'vertical',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        minHeight: '38px'
+                                                    }}
+                                                >
+                                                    {d.mo_ta || (d.nguyen_lieu_chinh ? `Nguyên liệu: ${d.nguyen_lieu_chinh}` : (d.cong_thuc || 'Công thức chuẩn đầu bếp.'))}
+                                                </p>
+
+                                                {/* Action Button */}
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 mt-auto"
+                                                    onClick={() => setSelectedDish(d)}
+                                                >
+                                                    <i className="fas fa-book-open"></i> Xem Công Thức Chi Tiết
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
+                    </div>
+
+                    {/* View All Button */}
+                    <div className="text-center mt-5">
+                        <Link to="/recipes" className="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                            <i className="fas fa-layer-group"></i> Khám Phá Toàn Bộ {dishes.length || 52}+ Món Ăn & Lên Thực Đơn
+                            <i className="fas fa-arrow-right ms-1"></i>
+                        </Link>
                     </div>
                 </div>
             </div>
             {/* Testimonial End */}
+
+            {/* Modal Chi tiết Món ăn khi xem từ Trang Chủ */}
+            {selectedDish && (
+                <RecipeDetailModal
+                    dish={selectedDish}
+                    onClose={() => setSelectedDish(null)}
+                />
+            )}
         </>
     );
 }

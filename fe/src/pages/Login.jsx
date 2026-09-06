@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { esc } from '../utils/img';
 
@@ -51,6 +51,7 @@ const styles = {
 export default function Login() {
     const { user, loading, login, register } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [tab, setTab] = useState('login');
 
     const [loginEmail, setLoginEmail] = useState('');
@@ -68,15 +69,22 @@ export default function Login() {
         );
     }
 
-    // Đã đăng nhập -> về trang chủ
-    if (user) return <Navigate to="/" replace />;
+    // Đã đăng nhập -> về trang trước đó hoặc trang chủ
+    if (user) return <Navigate to={location.state?.from || "/"} replace />;
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
             const data = await login(loginEmail, loginPassword);
             alert('✅ Đăng nhập thành công!');
-            navigate(redirectTo(data.redirectUrl));
+            const from = location.state?.from;
+            if (data.user?.vai_tro === 'admin') {
+                navigate('/admin');
+            } else if (from) {
+                navigate(from);
+            } else {
+                navigate(redirectTo(data.redirectUrl));
+            }
         } catch (err) {
             alert('❌ ' + err.message);
         }
@@ -87,7 +95,8 @@ export default function Login() {
         try {
             await register(regName, regEmail, regPassword);
             alert('✅ Đăng ký thành công!');
-            navigate('/');
+            const from = location.state?.from;
+            navigate(from || '/');
         } catch (err) {
             alert('❌ ' + err.message);
         }

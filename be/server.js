@@ -117,9 +117,19 @@ app.post('/api/menu/generate', async (req, res) => {
     try {
         const { ingredients, days } = req.body;
         
-        // 1. Lấy toàn bộ món ăn từ CSDL
-        const allDishesResult = await query('SELECT id, ten_mon, nguyen_lieu_chinh, cong_thuc, hinh_anh, loai_mon FROM mon_an');
-        const allDishes = Array.isArray(allDishesResult) ? (Array.isArray(allDishesResult[0]) ? allDishesResult[0] : allDishesResult) : [];
+        // 1. Lấy toàn bộ món ăn từ CSDL (đầy đủ thông tin chi tiết)
+        const allDishesResult = await query('SELECT * FROM mon_an');
+        const rawDishes = Array.isArray(allDishesResult) ? (Array.isArray(allDishesResult[0]) ? allDishesResult[0] : allDishesResult) : [];
+        const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
+        const allDishes = (rawDishes || []).map(d => ({
+            ...d,
+            thoi_gian_chuan_bi: d.thoi_gian_chuan_bi ? Number(d.thoi_gian_chuan_bi) : 10,
+            thoi_gian_nau: d.thoi_gian_nau ? Number(d.thoi_gian_nau) : 15,
+            nguyen_lieu_chi_tiet: parseJSON(d.nguyen_lieu_chi_tiet, []),
+            cac_buoc_thuc_hien: parseJSON(d.cac_buoc_thuc_hien, []),
+            dinh_duong: parseJSON(d.dinh_duong, null),
+            tags: parseJSON(d.tags, [])
+        }));
 
         if (!allDishes || allDishes.length === 0) {
             return res.json({ success: false, message: "Cơ sở dữ liệu trống món ăn." });

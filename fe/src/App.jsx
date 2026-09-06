@@ -40,8 +40,9 @@ function Loading() {
 // Trang yêu cầu đăng nhập
 function RequireLogin({ children }) {
     const { user, loading } = useAuth();
+    const location = useLocation();
     if (loading) return <Loading />;
-    if (!user) return <Navigate to="/dang-nhap" replace />;
+    if (!user) return <Navigate to="/dang-nhap" state={{ from: location.pathname + location.search }} replace />;
     return children;
 }
 

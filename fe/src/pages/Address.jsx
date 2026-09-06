@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { esc } from '../utils/img';
+import { useDialog } from '../contexts/DialogContext';
 
 export default function Address() {
+    const dialog = useDialog();
     const [addresses, setAddresses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -53,7 +55,13 @@ export default function Address() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) return;
+        const ok = await dialog.confirm('Bạn có chắc chắn muốn xóa địa chỉ nhận hàng này?', {
+            title: 'Xóa Địa Chỉ',
+            type: 'error',
+            confirmText: 'Xóa địa chỉ',
+            cancelText: 'Hủy'
+        });
+        if (!ok) return;
         try {
             await api.del('/api/user/dia-chi/' + id);
             loadAddresses();

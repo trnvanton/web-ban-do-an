@@ -34,16 +34,30 @@
             padding: 0 45px;
         }
 
+        .productSwiper {
+            overflow: visible !important;
+            padding: 10px 0 25px 0 !important;
+        }
+
         .productSwiper .swiper-button-next,
         .productSwiper .swiper-button-prev {
             z-index: 99 !important;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background: #ffffff;
             border: 2px solid #81c408;
             border-radius: 50%;
             color: #81c408 !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            top: 45% !important;
+        }
+
+        .productSwiper .swiper-button-next:hover,
+        .productSwiper .swiper-button-prev:hover {
+            background: #81c408;
+            color: #ffffff !important;
+            transform: scale(1.08);
         }
 
         .productSwiper .swiper-button-next:after,
@@ -53,11 +67,29 @@
         }
 
         .productSwiper .swiper-button-prev {
-            left: 0px !important;
+            left: -35px !important;
         }
 
         .productSwiper .swiper-button-next {
-            right: 0px !important;
+            right: -35px !important;
+        }
+
+        .productSwiper .swiper-button-disabled {
+            opacity: 0.3 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .product-slider-wrapper {
+                padding: 0 20px;
+            }
+            .productSwiper .swiper-button-prev {
+                left: -10px !important;
+            }
+            .productSwiper .swiper-button-next {
+                right: -10px !important;
+            }
         }
 
         .product-desc-short {

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useDialog } from '../contexts/DialogContext';
 
 export default function Navbar() {
     const { user, isAdmin, logout } = useAuth();
-    const { count } = useCart();
+    const { count, clear } = useCart();
+    const dialog = useDialog();
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
 
@@ -23,8 +25,15 @@ export default function Navbar() {
     };
 
     const handleLogout = async () => {
-        if (!window.confirm('Bạn có chắc chắn muốn đăng xuất tài khoản?')) return;
+        const ok = await dialog.confirm('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?', {
+            title: 'Đăng Xuất Tài Khoản',
+            type: 'warning',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Ở lại'
+        });
+        if (!ok) return;
         await logout();
+        clear();
         navigate('/dang-nhap');
     };
 

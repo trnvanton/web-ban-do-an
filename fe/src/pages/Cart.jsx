@@ -1,23 +1,31 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import { useDialog } from '../contexts/DialogContext';
 import { imgUrl, esc, fmtVND } from '../utils/img';
 
 export default function Cart() {
     const { items, setQty, removeItem, total, count } = useCart();
+    const dialog = useDialog();
 
     const changeQty = (item, delta) => {
         const next = item.quantity + delta;
         const max = item.stock || 9999;
         if (next > max) {
-            alert(`⚠️ Trong kho chỉ còn ${item.stock} sản phẩm!`);
+            dialog.warning(`Trong kho chỉ còn ${item.stock} sản phẩm!`, { title: 'Số Lượng Tối Đa' });
             return;
         }
         if (next < 1) return;
         setQty(item.id, next);
     };
 
-    const onRemove = item => {
-        if (confirm(`Bạn có chắc muốn xóa "${item.name}" khỏi giỏ hàng?`)) {
+    const onRemove = async item => {
+        const ok = await dialog.confirm(`Bạn có chắc muốn xóa "${item.name}" khỏi giỏ hàng?`, {
+            title: 'Xóa Khỏi Giỏ Hàng',
+            type: 'warning',
+            confirmText: 'Xóa sản phẩm',
+            cancelText: 'Giữ lại'
+        });
+        if (ok) {
             removeItem(item.id);
         }
     };

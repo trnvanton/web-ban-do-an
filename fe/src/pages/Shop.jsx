@@ -89,10 +89,10 @@ export default function Shop() {
         <>
             {/* Single Page Header start */}
             <div className="container-fluid page-header py-5">
-                <h1 className="text-center text-white display-6">Cửa Hàng Nông Sản</h1>
+                <h1 className="text-center text-white display-6">Thực Đơn Món Ăn & Meal-kit</h1>
                 <ol className="breadcrumb justify-content-center mb-0">
                     <li className="breadcrumb-item"><Link to="/">Trang chủ</Link></li>
-                    <li className="breadcrumb-item active text-white">Cửa hàng</li>
+                    <li className="breadcrumb-item active text-white">Thực đơn đặt món</li>
                 </ol>
             </div>
             {/* Single Page Header End */}
@@ -106,7 +106,7 @@ export default function Shop() {
                                 <input
                                     type="search"
                                     className="form-control p-3"
-                                    placeholder="Nhập tên nông sản cần tìm..."
+                                    placeholder="Tìm món ăn, set meal-kit hoặc đồ uống..."
                                     value={keyword}
                                     onChange={onSearch}
                                 />

@@ -1,24 +1,52 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { imgUrl, esc, fmtVND } from '../utils/img';
 import { useCart } from '../contexts/CartContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useDialog } from '../contexts/DialogContext';
 
 export default function ProductCard({ p, compact = false }) {
     const { items, addItem } = useCart();
+    const { user } = useAuth();
+    const dialog = useDialog();
+    const navigate = useNavigate();
+    const location = useLocation();
     const [cardQty, setCardQty] = useState(1);
     const stock = Number(p.so_luong_ton) || 0;
     const isOutOfStock = stock <= 0;
     const to = `/san-pham/${p.id}`;
 
-    const handleAddToCart = (e) => {
+    const handleAddToCart = async (e) => {
         e.preventDefault();
+        if (!user) {
+            const goLogin = await dialog.confirm('Bạn cần đăng nhập tài khoản để thêm sản phẩm vào giỏ hàng và đặt mua.', {
+                title: 'Yêu Cầu Đăng Nhập',
+                type: 'warning',
+                confirmText: 'Đăng nhập ngay',
+                cancelText: 'Để sau'
+            });
+            if (goLogin) {
+                navigate('/dang-nhap', { state: { from: location.pathname + location.search } });
+            }
+            return;
+        }
         const existingInCart = items.find(i => i.id === p.id)?.quantity || 0;
         if (existingInCart + cardQty > stock) {
-            alert(`⚠️ Không thể thêm! Trong kho chỉ còn ${stock} sản phẩm (Bạn đã có ${existingInCart} trong giỏ).`);
+            dialog.warning(`Trong kho chỉ còn ${stock} sản phẩm (bạn đã có ${existingInCart} trong giỏ hàng).`, {
+                title: 'Số Lượng Không Đủ'
+            });
             return;
         }
         addItem(p, cardQty);
-        alert(`✅ Đã thêm ${cardQty} x "${p.ten_san_pham}" vào giỏ hàng!`);
+        const viewCart = await dialog.confirm(`Đã thêm ${cardQty} x "${p.ten_san_pham}" vào giỏ hàng thành công! Bạn có muốn đến giỏ hàng ngay không?`, {
+            title: 'Thêm Giỏ Hàng Thành Công',
+            type: 'success',
+            confirmText: 'Đến giỏ hàng',
+            cancelText: 'Mua tiếp'
+        });
+        if (viewCart) {
+            navigate('/gio-hang');
+        }
     };
 
     const cardBody = (
