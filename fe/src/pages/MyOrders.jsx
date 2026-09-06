@@ -360,8 +360,8 @@ export default function MyOrders() {
                                         {[1, 2, 3, 4, 5].map(star => (
                                             <i
                                                 key={star}
-                                                className={`fa ${star <= reviewStars ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'} cursor-pointer transition-transform`}
-                                                style={{ cursor: 'pointer', transform: star === reviewStars ? 'scale(1.2)' : 'none' }}
+                                                className={`${star <= reviewStars ? 'fas fa-star text-warning' : 'far fa-star text-muted opacity-50'} cursor-pointer transition-all`}
+                                                style={{ cursor: 'pointer', transform: star === reviewStars ? 'scale(1.25)' : 'none', padding: '0 4px', transition: 'transform 0.15s ease' }}
                                                 onClick={() => setReviewStars(star)}
                                             ></i>
                                         ))}

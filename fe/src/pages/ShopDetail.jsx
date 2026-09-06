@@ -282,7 +282,7 @@ export default function ShopDetail() {
                                     <div className="meta-rating">
                                         <div className="text-warning">
                                             {[1, 2, 3, 4, 5].map(s => (
-                                                <i key={s} className={`fa ${s <= Math.round(reviewData.rating_average || 5) ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'}`}></i>
+                                                <i key={s} className={s <= Math.round(reviewData.rating_average || 5) ? 'fas fa-star text-warning' : 'far fa-star text-muted opacity-50'}></i>
                                             ))}
                                         </div>
                                         <span className="ms-1">{reviewData.rating_average > 0 ? reviewData.rating_average : '5.0'}</span>
@@ -533,7 +533,7 @@ export default function ShopDetail() {
                                         </div>
                                         <div className="text-warning my-2 fs-5">
                                             {[1, 2, 3, 4, 5].map(s => (
-                                                <i key={s} className={`fa ${s <= Math.round(reviewData.rating_average || 5) ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'}`}></i>
+                                                <i key={s} className={s <= Math.round(reviewData.rating_average || 5) ? 'fas fa-star text-warning' : 'far fa-star text-muted opacity-50'}></i>
                                             ))}
                                         </div>
                                         <div className="text-muted small">Dựa trên {reviewData.total_reviews} lượt đánh giá thực tế</div>
@@ -578,7 +578,7 @@ export default function ShopDetail() {
                                                 </div>
                                                 <div className="text-warning">
                                                     {[1, 2, 3, 4, 5].map(s => (
-                                                        <i key={s} className={`fa ${s <= r.so_sao ? 'fa-star text-warning' : 'fa-star-o text-muted opacity-50'}`}></i>
+                                                        <i key={s} className={s <= r.so_sao ? 'fas fa-star text-warning' : 'far fa-star text-muted opacity-50'}></i>
                                                     ))}
                                                 </div>
                                             </div>
