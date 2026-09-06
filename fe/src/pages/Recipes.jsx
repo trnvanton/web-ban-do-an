@@ -246,7 +246,7 @@ export default function Recipes() {
         // Kiểm tra hợp lệ theo từng chế độ
         if (menuMode === 'mode1') {
             if (selectedIngredients.length < 2) {
-                dialog.warning('🟢 Chế độ 1 (Có nguyên liệu): Vui lòng chọn từ 2 nguyên liệu trở lên từ tủ lạnh của bạn! (Nếu chỉ có 1 nguyên liệu, hãy chọn Chế độ 2)');
+                dialog.warning('🟢 Chế độ 1 (Có nguyên liệu): Vui lòng chọn từ 2 nguyên liệu trở lên từ tủ lạnh của bạn! (Nếu bạn chỉ có 1 nguyên liệu, hãy chọn Chế độ 2)');
                 return;
             }
         } else if (menuMode === 'mode2') {
@@ -267,19 +267,35 @@ export default function Recipes() {
 
             const res = await api.post('/api/menu/generate', payload);
             
-            if (res) {
+            let list = [];
+            let summaryObj = null;
+            let modeText = '';
+
+            if (Array.isArray(res)) {
+                list = res;
+            } else if (res && typeof res === 'object') {
                 if (res.success === false) {
-                    dialog.warning(res.message || 'Không thể tạo thực đơn phù hợp.');
+                    dialog.warning(res.message || '😥 Chưa tìm thấy thực đơn phù hợp.');
                     setMenuResult([]);
                     setMenuSummary(null);
-                } else {
-                    setMenuResult(res.data || []);
-                    setMenuSummary(res.summary || null);
-                    setMenuModeLabel(res.modeLabel || '');
+                    return;
                 }
+                list = Array.isArray(res.data) ? res.data : [];
+                summaryObj = res.summary || null;
+                modeText = res.modeLabel || '';
+            }
+
+            if (!list || list.length === 0) {
+                dialog.warning('😥 Chưa tìm thấy thực đơn phù hợp. Hãy thử thay đổi nguyên liệu hoặc tiêu chí sở thích!');
+                setMenuResult([]);
+                setMenuSummary(null);
+            } else {
+                setMenuResult(list);
+                setMenuSummary(summaryObj);
+                setMenuModeLabel(modeText);
             }
         } catch (err) {
-            dialog.error('Lỗi hệ thống khi lập menu: ' + err.message);
+            dialog.error('Lỗi hệ thống khi lập menu: ' + (err.message || 'Không thể kết nối đến máy chủ'));
         } finally {
             setMenuLoading(false);
         }

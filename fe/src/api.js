@@ -27,9 +27,12 @@ async function request(path, options = {}) {
     }
 
     // Tự động xử lý thông minh: 
-    // Nếu server trả về dạng { success: true, data: [...] } thì tự động lấy phần .data
-    // Ngược lại, trả về nguyên bản dữ liệu (đối với các API cũ trả về thẳng mảng/object)
+    // Nếu server trả về dạng { success: true, data: [...] } mà không có metadata khác thì lấy phần .data
+    // Nếu có metadata như summary, modeLabel... thì giữ nguyên toàn bộ object để component sử dụng
     if (data && typeof data === 'object' && 'data' in data) {
+        if ('summary' in data || 'modeLabel' in data || 'pagination' in data) {
+            return data;
+        }
         return data.data;
     }
 

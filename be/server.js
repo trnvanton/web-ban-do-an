@@ -175,11 +175,30 @@ app.post('/api/menu/generate', async (req, res) => {
             else activeMode = 'preferences'; // Chế độ 3
         }
 
+        // Kiểm tra hợp lệ theo quy tắc đồ án:
+        if (activeMode !== 'preferences') {
+            if (targetIngNames.length === 0) {
+                return res.json({
+                    success: false,
+                    message: "Vui lòng chọn ít nhất một nguyên liệu từ tủ lạnh của bạn, hoặc chuyển sang chế độ 'Gợi ý theo sở thích'."
+                });
+            }
+
+            // Kiểm tra xem có món nào trong database khớp với các nguyên liệu này không
+            const matchedCount = allDishes.filter(d => analyzeDishMatch(d, targetIngNames).matchScore > 0).length;
+            if (matchedCount === 0) {
+                return res.json({
+                    success: false,
+                    message: `😥 Chưa tìm thấy món ăn phù hợp với nguyên liệu (${targetIngNames.join(', ')}). Hệ thống chưa có công thức nấu các nguyên liệu này. Bạn hãy thử chọn thêm các nguyên liệu phổ biến khác nhé!`
+                });
+            }
+        }
+
         let basePool = allDishes;
         let modeLabel = '';
 
         if (activeMode === 'preferences') {
-            modeLabel = '🔵 Chế độ 3 — Lập thực đơn theo Sở thích & Nhu cầu';
+            modeLabel = '🔵 Lập thực đơn theo Sở thích & Nhu cầu';
             // Lọc theo các tiêu chí sở thích nếu có
             if (preferences && typeof preferences === 'object') {
                 const filtered = filterDishesByPreferences(allDishes, preferences);
@@ -188,9 +207,9 @@ app.post('/api/menu/generate', async (req, res) => {
                 }
             }
         } else if (activeMode === 'few_ingredients') {
-            modeLabel = `🟡 Chế độ 2 — Có ít nguyên liệu (${targetIngNames.join(', ')}) & Đề xuất đi chợ mua bổ sung`;
+            modeLabel = `🟡 Có ít nguyên liệu (${targetIngNames.join(', ')}) & Đề xuất mâm cơm + Danh sách đi chợ`;
         } else {
-            modeLabel = `🟢 Chế độ 1 — Gợi ý thực đơn tối ưu theo nguyên liệu có sẵn (${targetIngNames.join(', ')})`;
+            modeLabel = `🟢 Gợi ý thực đơn tối ưu theo nguyên liệu có sẵn (${targetIngNames.join(', ')})`;
         }
 
         // Gắn phân tích nguyên liệu cho từng món
