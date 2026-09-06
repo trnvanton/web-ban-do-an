@@ -137,7 +137,7 @@ app.post('/api/menu/generate', async (req, res) => {
             return res.json({ success: false, message: "Cơ sở dữ liệu trống món ăn." });
         }
 
-        // 2. Phân loại nghiêm ngặt nhóm món ăn
+        // 2. Phân loại cấu trúc mâm cơm
         const isDessert = (d) => {
             const cat = (d.loai_mon || '').toLowerCase();
             const name = (d.ten_mon || '').toLowerCase();
@@ -155,28 +155,21 @@ app.post('/api/menu/generate', async (req, res) => {
         };
         const isMainCourse = (d) => !isDessert(d) && !isSoup(d) && !isStirFry(d);
 
-        let activeMode = mode;
+        let activeMode = mode === 'preferences' ? 'preferences' : 'ingredients';
         let targetIngNames = [];
 
         // Xử lý danh sách nguyên liệu nếu có
-        if (ingredients && ingredients.length > 0) {
-            const ingArr = Array.isArray(ingredients) ? ingredients.map(Number).filter(Boolean) : [Number(ingredients)].filter(Boolean);
-            if (ingArr.length > 0) {
-                const placeholders = ingArr.map(() => '?').join(',');
-                const ingRows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingArr);
-                targetIngNames = (ingRows || []).map(r => r.ten_nguyen_lieu);
+        if (activeMode === 'ingredients') {
+            if (ingredients && ingredients.length > 0) {
+                const ingArr = Array.isArray(ingredients) ? ingredients.map(Number).filter(Boolean) : [Number(ingredients)].filter(Boolean);
+                if (ingArr.length > 0) {
+                    const placeholders = ingArr.map(() => '?').join(',');
+                    const ingRows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingArr);
+                    targetIngNames = (ingRows || []).map(r => r.ten_nguyen_lieu);
+                }
             }
-        }
 
-        // Tự động suy luận mode nếu không chỉ định rõ
-        if (!activeMode) {
-            if (targetIngNames.length >= 2) activeMode = 'ingredients'; // Chế độ 1
-            else if (targetIngNames.length === 1) activeMode = 'few_ingredients'; // Chế độ 2
-            else activeMode = 'preferences'; // Chế độ 3
-        }
-
-        // Kiểm tra hợp lệ theo quy tắc đồ án:
-        if (activeMode !== 'preferences') {
+            // Bắt buộc phải chọn ít nhất 1 nguyên liệu ở chế độ nguyên liệu
             if (targetIngNames.length === 0) {
                 return res.json({
                     success: false,
@@ -185,8 +178,8 @@ app.post('/api/menu/generate', async (req, res) => {
             }
 
             // Kiểm tra xem có món nào trong database khớp với các nguyên liệu này không
-            const matchedCount = allDishes.filter(d => analyzeDishMatch(d, targetIngNames).matchScore > 0).length;
-            if (matchedCount === 0) {
+            const matchedDishesCount = allDishes.filter(d => analyzeDishMatch(d, targetIngNames).matchScore > 0).length;
+            if (matchedDishesCount === 0) {
                 return res.json({
                     success: false,
                     message: `😥 Chưa tìm thấy món ăn phù hợp với nguyên liệu (${targetIngNames.join(', ')}). Hệ thống chưa có công thức nấu các nguyên liệu này. Bạn hãy thử chọn thêm các nguyên liệu phổ biến khác nhé!`
@@ -198,18 +191,15 @@ app.post('/api/menu/generate', async (req, res) => {
         let modeLabel = '';
 
         if (activeMode === 'preferences') {
-            modeLabel = '🔵 Lập thực đơn theo Sở thích & Nhu cầu';
-            // Lọc theo các tiêu chí sở thích nếu có
+            modeLabel = '🎯 Lập thực đơn theo Sở thích & Khẩu vị';
             if (preferences && typeof preferences === 'object') {
                 const filtered = filterDishesByPreferences(allDishes, preferences);
                 if (filtered.length >= 4) {
                     basePool = filtered;
                 }
             }
-        } else if (activeMode === 'few_ingredients') {
-            modeLabel = `🟡 Có ít nguyên liệu (${targetIngNames.join(', ')}) & Đề xuất mâm cơm + Danh sách đi chợ`;
         } else {
-            modeLabel = `🟢 Gợi ý thực đơn tối ưu theo nguyên liệu có sẵn (${targetIngNames.join(', ')})`;
+            modeLabel = `🥗 Lập thực đơn từ nguyên liệu có sẵn (${targetIngNames.join(', ')})`;
         }
 
         // Gắn phân tích nguyên liệu cho từng món
@@ -224,60 +214,52 @@ app.post('/api/menu/generate', async (req, res) => {
         const poolCanh = analyzedDishes.filter(isSoup);
         const poolTrangMieng = analyzedDishes.filter(isDessert);
 
-        // Sinh mâm cơm tự động thông minh
+        // Sinh mâm cơm tự động thông minh: Ưu tiên dùng hết món khớp nguyên liệu trước, sau đó bổ sung thông minh
         const usedOverallIds = new Set();
         const selectedMenu = [];
-        const aggregatedShoppingMap = new Map();
 
         const pickSmartDish = (categoryPool, globalPool, usedToday) => {
-            const available = categoryPool.filter(d => !usedToday.has(d.id));
-            let candidates = available.filter(d => !usedOverallIds.has(d.id));
-            if (candidates.length === 0) candidates = available;
-            if (candidates.length === 0) candidates = globalPool.filter(d => !usedToday.has(d.id));
-            if (candidates.length === 0) candidates = globalPool;
+            // Tách thành: Món khớp nguyên liệu vs Món gợi ý thêm
+            const matchedCandidates = categoryPool.filter(d => (d.analysis?.matchScore || 0) > 0 && !usedToday.has(d.id));
+            const unmatchedCandidates = categoryPool.filter(d => (!d.analysis || d.analysis.matchScore === 0) && !usedToday.has(d.id));
 
-            // Sắp xếp ưu tiên: món khớp nguyên liệu của user trước, hoặc thiếu ít đồ nhất
-            const sorted = [...candidates].sort((a, b) => {
-                const aScore = a.analysis?.matchScore || 0;
-                const bScore = b.analysis?.matchScore || 0;
-                if (bScore !== aScore) return bScore - aScore;
-                const aMiss = a.analysis?.missingCount || 0;
-                const bMiss = b.analysis?.missingCount || 0;
-                return aMiss - bMiss;
-            });
+            let picked = null;
+            let isMatched = false;
 
-            const topSlice = sorted.slice(0, Math.min(3, sorted.length));
-            const picked = topSlice[Math.floor(Math.random() * topSlice.length)] || sorted[0] || allDishes[0];
+            // 1. Ưu tiên món khớp nguyên liệu chưa dùng lần nào
+            const availableMatchedFresh = matchedCandidates.filter(d => !usedOverallIds.has(d.id));
+            if (availableMatchedFresh.length > 0) {
+                // Sắp xếp theo độ khớp cao nhất
+                availableMatchedFresh.sort((a, b) => (b.analysis?.matchPercentage || 0) - (a.analysis?.matchPercentage || 0));
+                picked = availableMatchedFresh[0];
+                isMatched = true;
+            } else if (matchedCandidates.length > 0 && activeMode === 'ingredients' && usedOverallIds.size < matchedCandidates.length) {
+                picked = matchedCandidates[0];
+                isMatched = true;
+            } else {
+                // 2. Nếu đã dùng hết món khớp nguyên liệu -> Bổ sung thông minh món khác (chống trùng lặp)
+                const freshUnmatched = unmatchedCandidates.filter(d => !usedOverallIds.has(d.id));
+                if (freshUnmatched.length > 0) {
+                    picked = freshUnmatched[Math.floor(Math.random() * freshUnmatched.length)];
+                } else if (unmatchedCandidates.length > 0) {
+                    picked = unmatchedCandidates[Math.floor(Math.random() * unmatchedCandidates.length)];
+                } else {
+                    const fallback = globalPool.filter(d => !usedToday.has(d.id));
+                    picked = fallback[Math.floor(Math.random() * fallback.length)] || globalPool[0] || allDishes[0];
+                }
+                isMatched = false;
+            }
 
             if (picked && picked.id) {
                 usedToday.add(picked.id);
                 usedOverallIds.add(picked.id);
-
-                // Tổng hợp nguyên liệu cần mua bổ sung vào Shopping List
-                if (picked.analysis && Array.isArray(picked.analysis.missingIngredients)) {
-                    for (const m of picked.analysis.missingIngredients) {
-                        if (!m.isBasicPantry && m.ten) {
-                            const key = m.ten.toLowerCase().trim();
-                            if (aggregatedShoppingMap.has(key)) {
-                                const exist = aggregatedShoppingMap.get(key);
-                                exist.count++;
-                                if (!exist.dishes.includes(picked.ten_mon)) {
-                                    exist.dishes.push(picked.ten_mon);
-                                }
-                            } else {
-                                aggregatedShoppingMap.set(key, {
-                                    ten: m.ten,
-                                    don_vi: m.don_vi || '',
-                                    so_luong: m.so_luong || '',
-                                    count: 1,
-                                    dishes: [picked.ten_mon]
-                                });
-                            }
-                        }
-                    }
-                }
             }
-            return picked;
+
+            return {
+                ...picked,
+                isMatchedIngredient: isMatched && activeMode === 'ingredients',
+                badgeText: (activeMode === 'ingredients') ? (isMatched ? '🌱 Khớp nguyên liệu' : '💡 Gợi ý thêm') : null
+            };
         };
 
         for (let day = 1; day <= totalDays; day++) {
@@ -301,8 +283,6 @@ app.post('/api/menu/generate', async (req, res) => {
             });
         }
 
-        const shoppingList = Array.from(aggregatedShoppingMap.values()).sort((a, b) => b.count - a.count);
-
         return res.json({
             success: true,
             mode: activeMode,
@@ -310,8 +290,7 @@ app.post('/api/menu/generate', async (req, res) => {
             summary: {
                 totalDays,
                 totalMeals: totalDays * 2,
-                userIngredients: targetIngNames,
-                shoppingList
+                userIngredients: targetIngNames
             },
             data: selectedMenu
         });

@@ -141,7 +141,7 @@ export default function Shop() {
                                     className={`btn btn-sm rounded-pill px-3 transition-all ${category === c ? 'btn-primary text-white shadow-sm fw-bold' : 'btn-white border text-dark'}`}
                                     onClick={() => handleCategoryClick(c)}
                                 >
-                                    {esc(c)}
+                                    {c}
                                 </button>
                             ))}
                         </div>

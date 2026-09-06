@@ -4,108 +4,175 @@ import { api } from '../api';
 import { imgUrl, esc } from '../utils/img';
 import { useDialog } from '../contexts/DialogContext';
 import RecipeDetailModal from '../components/RecipeDetailModal';
+import './Recipes.css';
+
+function MealDishRow({ dish, typeKey, onOpenDetail }) {
+    if (!dish) return null;
+    const isMatched = dish.isMatchedIngredient;
+    const badgeText = dish.badgeText;
+
+    let icon = '🍲';
+    let tagClass = 'tag-canh';
+    let label = 'Canh';
+
+    if (typeKey === 'mon_man') {
+        icon = '🍖';
+        tagClass = 'tag-man';
+        label = 'Mặn';
+    } else if (typeKey === 'mon_xao_ran') {
+        icon = '🍳';
+        tagClass = 'tag-xao';
+        label = 'Xào';
+    } else if (typeKey === 'trang_mieng') {
+        icon = '🍉';
+        tagClass = 'tag-trang-mieng';
+        label = 'Tráng miệng';
+    }
+
+    return (
+        <div
+            className="meal-dish-row"
+            onClick={() => onOpenDetail(dish)}
+            title="Nhấn để xem chi tiết & công thức nấu"
+        >
+            <div className="meal-dish-top">
+                <div className="meal-dish-meta">
+                    <span className={`meal-category-tag ${tagClass}`}>
+                        {icon} {label}
+                    </span>
+                    <span className="meal-dish-name" title={dish.ten_mon}>
+                        {esc(dish.ten_mon)}
+                    </span>
+                </div>
+                <i className="fas fa-chevron-right text-muted" style={{ fontSize: '0.75rem', flexShrink: 0 }}></i>
+            </div>
+            {(badgeText || dish.thoi_gian_nau) && (
+                <div className="meal-dish-bottom">
+                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                        {dish.thoi_gian_nau ? `⏱️ ${dish.thoi_gian_nau} phút` : ''}
+                    </span>
+                    {isMatched ? (
+                        <span className="badge-matched-pill">
+                            🌱 Khớp nguyên liệu
+                        </span>
+                    ) : badgeText ? (
+                        <span className="badge-extra-pill">
+                            💡 Gợi ý thêm
+                        </span>
+                    ) : null}
+                </div>
+            )}
+        </div>
+    );
+}
 
 function RecipeCard({ dish, onSelectDish, userIngredientsCount = 0 }) {
     const totalTime = (dish.thoi_gian_chuan_bi || 10) + (dish.thoi_gian_nau || 15);
-    const difficultyColors = {
-        'Dễ': 'bg-success',
-        'Trung bình': 'bg-warning text-dark',
-        'Khó': 'bg-danger'
+    
+    // Icon and label for category
+    const getCategoryIcon = (cat) => {
+        const c = (cat || '').toLowerCase();
+        if (c.includes('canh')) return '🍲';
+        if (c.includes('xào') || c.includes('rau')) return '🍳';
+        if (c.includes('tráng miệng') || c.includes('quả') || c.includes('chè')) return '🍉';
+        return '🍖';
     };
-    const diffBadge = difficultyColors[dish.do_kho] || 'bg-success';
+
+    // Difficulty badge config
+    const diff = dish.do_kho || 'Dễ';
+    let diffClass = 'diff-easy';
+    let diffIcon = '🌱';
+    if (diff === 'Trung bình') {
+        diffClass = 'diff-med';
+        diffIcon = '⭐';
+    } else if (diff === 'Khó') {
+        diffClass = 'diff-hard';
+        diffIcon = '🔥';
+    }
 
     const analysis = dish.analysis;
     const hasMatch = analysis && analysis.matchScore > 0;
+    const matchPct = analysis ? (analysis.matchPercentage || 0) : 0;
+    const matchClass = matchPct >= 90 ? 'match-gold' : matchPct >= 70 ? 'match-silver' : 'match-bronze';
+    const matchMedal = matchPct >= 90 ? '🥇' : matchPct >= 70 ? '🥈' : '🥉';
 
     return (
         <div className="col-md-6 col-lg-4">
-            <div className="card h-100 border-0 shadow-sm rounded-4 overflow-hidden d-flex flex-column bg-white transition-hover" style={{ transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}>
-                {/* Image Banner */}
-                <div className="position-relative" style={{ height: 210, overflow: 'hidden' }}>
+            <div className="recipe-card-modern">
+                {/* Image Wrap */}
+                <div className="recipe-img-wrap">
                     <img
                         src={imgUrl(dish.hinh_anh)}
-                        className="w-100 h-100"
-                        style={{ objectFit: 'cover' }}
                         alt={esc(dish.ten_mon)}
+                        loading="lazy"
                     />
-                    <div className="position-absolute top-0 start-0 m-3 d-flex flex-column gap-1">
-                        <span className="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-1.5 shadow-sm">
-                            <i className="fas fa-utensils me-1"></i> {dish.loai_mon || 'Món mặn'}
-                        </span>
-                        {hasMatch && (
-                            <span className="badge rounded-pill bg-success px-3 py-1.5 shadow-sm fw-bold">
-                                {analysis.matchPercentage >= 90 ? '🥇' : analysis.matchPercentage >= 70 ? '🥈' : '🥉'} Khớp {analysis.matchPercentage}%
-                            </span>
-                        )}
+                    <div className="recipe-img-gradient"></div>
+
+                    {/* Category badge */}
+                    <div className="recipe-badge-category">
+                        <span>{getCategoryIcon(dish.loai_mon)}</span>
+                        <span>{dish.loai_mon || 'Món mặn'}</span>
                     </div>
-                    {dish.do_kho && (
-                        <div className="position-absolute top-0 end-0 m-3">
-                            <span className={`badge rounded-pill px-3 py-1.5 shadow-sm ${diffBadge}`}>
-                                {dish.do_kho}
-                            </span>
+
+                    {/* Difficulty Badge */}
+                    <div className={`recipe-badge-diff ${diffClass}`}>
+                        {diffIcon} {diff}
+                    </div>
+
+                    {/* Match percentage badge if filtering by ingredients */}
+                    {hasMatch && userIngredientsCount > 0 && (
+                        <div className={`recipe-badge-match ${matchClass}`}>
+                            <span>{matchMedal}</span>
+                            <span>Khớp {matchPct}%</span>
                         </div>
                     )}
                 </div>
 
-                {/* Card Body */}
-                <div className="p-4 d-flex flex-column flex-grow-1">
-                    <h5 className="fw-bold text-dark mb-2 text-truncate" title={dish.ten_mon}>
+                {/* Card Content */}
+                <div className="recipe-card-content">
+                    <h5 className="recipe-dish-title" title={dish.ten_mon}>
                         {esc(dish.ten_mon)}
                     </h5>
 
                     {/* Quick Metric Chips */}
                     <div className="d-flex flex-wrap gap-2 mb-3">
-                        <span className="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill small">
-                            <i className="fas fa-clock text-primary me-1"></i> {totalTime} phút
-                        </span>
-                        <span className="badge bg-light text-secondary border px-2.5 py-1.5 rounded-pill small">
-                            <i className="fas fa-user-friends text-success me-1"></i> {dish.khau_phan || '2 - 3 người'}
-                        </span>
+                        <div className="recipe-chip">
+                            <i className="fas fa-clock text-primary"></i>
+                            <span>{totalTime} phút</span>
+                        </div>
+                        <div className="recipe-chip">
+                            <i className="fas fa-user-friends text-success"></i>
+                            <span>{dish.khau_phan || '2 - 3 người'}</span>
+                        </div>
                     </div>
 
-                    {/* Phân tích nguyên liệu (Chế độ 1 & 2) */}
+                    {/* Ingredient Analysis or Description */}
                     {hasMatch && userIngredientsCount > 0 ? (
-                        <div className="p-2.5 rounded-3 bg-light border mb-3 small flex-grow-1">
+                        <div className="recipe-analysis-box">
                             {analysis.matchedIngredients?.length > 0 && (
-                                <div className="text-success fw-semibold mb-1 text-truncate">
+                                <div className="text-success fw-bold mb-1 text-truncate">
                                     <i className="fas fa-check-circle me-1"></i>
-                                    <strong>Đã có:</strong> {analysis.matchedIngredients.join(', ')}
+                                    <span>Đã có: {analysis.matchedIngredients.join(', ')}</span>
                                 </div>
                             )}
                             {analysis.missingIngredients?.length > 0 && (
-                                <div className="text-warning text-truncate" style={{ color: '#d97706' }}>
+                                <div style={{ color: '#d97706' }} className="fw-semibold text-truncate">
                                     <i className="fas fa-shopping-basket me-1"></i>
-                                    <strong>Cần thêm ({analysis.missingCount}):</strong> {analysis.missingIngredients.filter(m => !m.isBasicPantry).slice(0, 3).map(m => m.ten).join(', ') || 'Gia vị cơ bản'}
+                                    <span>Cần thêm ({analysis.missingCount}): {analysis.missingIngredients.filter(m => !m.isBasicPantry).slice(0, 3).map(m => m.ten).join(', ') || 'Gia vị'}</span>
                                 </div>
                             )}
                         </div>
-                    ) : dish.mo_ta ? (
-                        <p
-                            className="text-muted small mb-3 flex-grow-1"
-                            style={{
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                minHeight: '38px'
-                            }}
-                        >
-                            {dish.mo_ta}
-                        </p>
-                    ) : dish.nguyen_lieu_chinh ? (
-                        <p className="text-muted small mb-3 flex-grow-1 text-truncate">
-                            <strong className="text-success">Nguyên liệu:</strong> {dish.nguyen_lieu_chinh}
-                        </p>
                     ) : (
-                        <div className="flex-grow-1"></div>
+                        <p className="recipe-desc-text" title={dish.mo_ta || dish.nguyen_lieu_chinh}>
+                            {dish.mo_ta || (dish.nguyen_lieu_chinh ? `Nguyên liệu chính: ${dish.nguyen_lieu_chinh}` : 'Món ăn gia đình thơm ngon, giàu dinh dưỡng và dễ dàng chế biến tại nhà.')}
+                        </p>
                     )}
 
                     {/* Tags preview */}
                     {Array.isArray(dish.tags) && dish.tags.length > 0 && (
-                        <div className="d-flex gap-1 mb-3 overflow-hidden" style={{ maxHeight: '24px' }}>
+                        <div className="d-flex flex-wrap gap-1 mb-3" style={{ minHeight: '26px' }}>
                             {dish.tags.slice(0, 3).map((t, idx) => (
-                                <span key={idx} className="badge bg-light text-muted border small" style={{ fontSize: '0.72rem' }}>
+                                <span key={idx} className="recipe-tag-pill">
                                     #{t}
                                 </span>
                             ))}
@@ -115,10 +182,10 @@ function RecipeCard({ dish, onSelectDish, userIngredientsCount = 0 }) {
                     {/* Action Button */}
                     <button
                         type="button"
-                        className="btn btn-outline-success w-100 rounded-pill py-2 fw-bold d-flex align-items-center justify-content-center gap-2 mt-auto"
+                        className="recipe-btn-view"
                         onClick={() => onSelectDish(dish)}
                     >
-                        <i className="fas fa-book-open"></i> Xem Chi Tiết Công Thức
+                        <i className="fas fa-book-open"></i> Xem Công Thức Chi Tiết
                     </button>
                 </div>
             </div>
@@ -139,12 +206,12 @@ export default function Recipes() {
     // State chung cho danh sách nguyên liệu từ CSDL
     const [ingredientGroups, setIngredientGroups] = useState({});
 
-    // State cho 3 Chế Độ Lập Menu (Tab 2)
-    const [menuMode, setMenuMode] = useState('mode1'); // 'mode1' (Có nguyên liệu), 'mode2' (Ít nguyên liệu), 'mode3' (Sở thích)
+    // State cho 2 Chế Độ Lập Menu (Tab 2)
+    const [menuMode, setMenuMode] = useState('ingredients'); // 'ingredients' (Theo nguyên liệu) hoặc 'preferences' (Theo sở thích)
     const [days, setDays] = useState(3);
     const [selectedIngredients, setSelectedIngredients] = useState([]);
     
-    // State tiêu chí Chế độ 3 (Sở thích)
+    // State tiêu chí Chế độ Sở thích
     const [preferences, setPreferences] = useState({
         categories: ['Món mặn', 'Món xào', 'Canh', 'Tráng miệng'],
         difficulty: 'all', // 'all', 'Dễ', 'Trung bình', 'Khó'
@@ -176,7 +243,7 @@ export default function Recipes() {
             if (kw) queryParts.push('keyword=' + encodeURIComponent(kw));
             if (ingIds && ingIds.length > 0) {
                 queryParts.push('ingredients=' + encodeURIComponent(ingIds.join(',')));
-                queryParts.push('mode=' + (ingIds.length === 1 ? 'few_ingredients' : 'ingredients'));
+                queryParts.push('mode=ingredients');
             }
             
             if (queryParts.length > 0) {
@@ -224,14 +291,14 @@ export default function Recipes() {
         });
     };
 
-    // Checkbox chọn ở tab lập menu (Chế độ 1 & 2)
+    // Checkbox chọn ở tab lập menu (Chế độ theo nguyên liệu)
     const handleMenuCheckbox = (id) => {
         setSelectedIngredients(prev =>
             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
     };
 
-    // Xử lý thay đổi tiêu chí sở thích (Chế độ 3)
+    // Xử lý thay đổi tiêu chí sở thích
     const handleTasteToggle = (t) => {
         setPreferences(prev => ({
             ...prev,
@@ -239,19 +306,14 @@ export default function Recipes() {
         }));
     };
 
-    // Gửi yêu cầu tạo thực đơn xuống Backend theo 3 Chế Độ
+    // Gửi yêu cầu tạo thực đơn xuống Backend
     const handleGenerateMenu = async (e) => {
         e.preventDefault();
 
-        // Kiểm tra hợp lệ theo từng chế độ
-        if (menuMode === 'mode1') {
-            if (selectedIngredients.length < 2) {
-                dialog.warning('🟢 Chế độ 1 (Có nguyên liệu): Vui lòng chọn từ 2 nguyên liệu trở lên từ tủ lạnh của bạn! (Nếu bạn chỉ có 1 nguyên liệu, hãy chọn Chế độ 2)');
-                return;
-            }
-        } else if (menuMode === 'mode2') {
+        // 1. Kiểm tra ràng buộc bắt buộc: Chưa chọn nguyên liệu thì không cho lập menu theo nguyên liệu
+        if (menuMode === 'ingredients') {
             if (selectedIngredients.length === 0) {
-                dialog.warning('🟡 Chế độ 2 (Ít nguyên liệu): Vui lòng chọn 1 hoặc 2 nguyên liệu bạn đang có sẵn để hệ thống đề xuất món và danh sách đi chợ bổ sung!');
+                dialog.warning('⚠️ Vui lòng chọn ít nhất một nguyên liệu từ tủ lạnh của bạn! (Hoặc chuyển sang Chế độ Lập thực đơn theo sở thích nếu bạn không có sẵn nguyên liệu)');
                 return;
             }
         }
@@ -259,10 +321,10 @@ export default function Recipes() {
         setMenuLoading(true);
         try {
             const payload = {
-                mode: menuMode === 'mode1' ? 'ingredients' : menuMode === 'mode2' ? 'few_ingredients' : 'preferences',
-                ingredients: (menuMode === 'mode1' || menuMode === 'mode2') ? selectedIngredients : [],
+                mode: menuMode,
+                ingredients: menuMode === 'ingredients' ? selectedIngredients : [],
                 days: Number(days),
-                preferences: menuMode === 'mode3' ? preferences : null
+                preferences: menuMode === 'preferences' ? preferences : null
             };
 
             const res = await api.post('/api/menu/generate', payload);
@@ -286,7 +348,7 @@ export default function Recipes() {
             }
 
             if (!list || list.length === 0) {
-                dialog.warning('😥 Chưa tìm thấy thực đơn phù hợp. Hãy thử thay đổi nguyên liệu hoặc tiêu chí sở thích!');
+                dialog.warning('😥 Chưa tìm thấy thực đơn phù hợp. Hãy thử chọn thêm nguyên liệu phổ biến khác!');
                 setMenuResult([]);
                 setMenuSummary(null);
             } else {
@@ -299,14 +361,6 @@ export default function Recipes() {
         } finally {
             setMenuLoading(false);
         }
-    };
-
-    // Sao chép danh sách đi chợ
-    const handleCopyShoppingList = () => {
-        if (!menuSummary?.shoppingList || menuSummary.shoppingList.length === 0) return;
-        const text = menuSummary.shoppingList.map((item, idx) => `${idx + 1}. ${item.ten} ${item.so_luong ? `(${item.so_luong} ${item.don_vi})` : ''} - Dùng cho: ${item.dishes.join(', ')}`).join('\n');
-        navigator.clipboard.writeText(`🛒 DANH SÁCH ĐI CHỢ CHO THỰC ĐƠN ${days} NGÀY:\n` + text);
-        dialog.alert('Đã sao chép danh sách đi chợ vào bộ nhớ tạm!');
     };
 
     return (
@@ -322,7 +376,7 @@ export default function Recipes() {
             <div className="text-center mx-auto mb-4" style={{ maxWidth: 750 }}>
                 <h1 className="fw-bold text-primary">Gợi Ý Món Ngon & Lập Thực Đơn Thông Minh</h1>
                 <p className="text-muted">
-                    Hệ thống gợi ý 3 chế độ thông minh: Dựa trên nguyên liệu có sẵn, Đề xuất khi có ít nguyên liệu kèm danh sách đi chợ, hoặc Lập thực đơn cá nhân hóa theo sở thích & khẩu vị.
+                    Hệ thống tích hợp thuật toán gợi ý dựa trên nguyên liệu có sẵn trong tủ lạnh và Lập mâm cơm tự động không trùng lặp theo ngày.
                 </p>
             </div>
 
@@ -334,14 +388,14 @@ export default function Recipes() {
                         className={`btn px-4 py-2.5 rounded-pill fw-bold transition-all ${activeTab === 'search' ? 'btn-success text-white shadow-sm' : 'text-secondary btn-light'}`}
                         onClick={() => setActiveTab('search')}
                     >
-                        <i className="fas fa-search me-2"></i> Tra Cứu & Gợi Ý Món Ăn
+                        <i className="fas fa-search me-2"></i> 1. Gợi Ý & Tra Cứu Món Ăn
                     </button>
                     <button
                         type="button"
                         className={`btn px-4 py-2.5 rounded-pill fw-bold transition-all ${activeTab === 'menu' ? 'btn-success text-white shadow-sm' : 'text-secondary btn-light'}`}
                         onClick={() => setActiveTab('menu')}
                     >
-                        <i className="fas fa-magic me-2"></i> Lập Thực Đơn Thông Minh (3 Chế Độ)
+                        <i className="fas fa-magic me-2"></i> 2. Lập Thực Đơn Mâm Cơm Tự Động
                     </button>
                 </div>
             </div>
@@ -374,7 +428,7 @@ export default function Recipes() {
                         <div className="mt-4 pt-3 border-top">
                             <div className="d-flex justify-content-between align-items-center mb-2">
                                 <label className="form-label fw-bold text-secondary small mb-0">
-                                    <i className="fas fa-filter me-1 text-success"></i> Hoặc chọn nguyên liệu bạn đang có để xem độ khớp:
+                                    <i className="fas fa-filter me-1 text-success"></i> Chọn nguyên liệu bạn đang có để xem độ khớp:
                                 </label>
                                 {searchIngredients.length > 0 && (
                                     <button
@@ -390,22 +444,14 @@ export default function Recipes() {
                                 )}
                             </div>
 
-                            {/* Thông báo thông minh theo số nguyên liệu đã chọn */}
-                            {searchIngredients.length >= 2 ? (
+                            {searchIngredients.length > 0 && (
                                 <div className="alert alert-success rounded-4 d-flex align-items-center gap-2 py-2 px-3 mb-3 small">
                                     <i className="fas fa-check-circle fs-5 text-success"></i>
                                     <div>
-                                        <strong>🟢 Chế độ 1:</strong> Đang phân tích độ khớp với <strong>{searchIngredients.length} nguyên liệu</strong> đã chọn. Các món sử dụng nhiều nguyên liệu có sẵn nhất được xếp lên đầu!
+                                        Đang phân tích độ khớp với <strong>{searchIngredients.length} nguyên liệu</strong> đã chọn. Các món sử dụng nhiều nguyên liệu có sẵn nhất được xếp lên đầu!
                                     </div>
                                 </div>
-                            ) : searchIngredients.length === 1 ? (
-                                <div className="alert alert-warning rounded-4 d-flex align-items-center gap-2 py-2 px-3 mb-3 small border-0" style={{ background: '#fffbeb', color: '#92400e' }}>
-                                    <i className="fas fa-lightbulb fs-5 text-warning"></i>
-                                    <div>
-                                        <strong>🟡 Chế độ 2 (Có ít nguyên liệu):</strong> Hệ thống gợi ý các món bạn có thể nấu ngay hoặc cần mua bổ sung ít nguyên liệu nhất!
-                                    </div>
-                                </div>
-                            ) : null}
+                            )}
 
                             {Object.keys(ingredientGroups).length === 0 ? (
                                 <p className="text-muted small">Đang tải danh sách nguyên liệu...</p>
@@ -416,15 +462,19 @@ export default function Recipes() {
                                         <div className="row g-2 pe-1" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                                             {ingredientGroups[category].map(item => (
                                                 <div className="col-md-3 col-6" key={item.id}>
-                                                    <div className={`form-check border p-2 rounded-3 hover-shadow ${searchIngredients.includes(item.id) ? 'bg-success bg-opacity-10 border-success' : 'bg-light'}`}>
+                                                    <div
+                                                        className={`ing-checkbox-item ${searchIngredients.includes(item.id) ? 'checked' : 'unchecked'}`}
+                                                        onClick={() => handleSearchCheckbox(item.id)}
+                                                    >
                                                         <input
-                                                            className="form-check-input ms-1"
+                                                            className="form-check-input ms-1 me-2"
                                                             type="checkbox"
                                                             id={`search-ing-${item.id}`}
                                                             checked={searchIngredients.includes(item.id)}
-                                                            onChange={() => handleSearchCheckbox(item.id)}
+                                                            onChange={() => {}}
+                                                            style={{ cursor: 'pointer' }}
                                                         />
-                                                        <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer text-truncate" style={{ maxWidth: '85%' }} htmlFor={`search-ing-${item.id}`} title={item.ten_nguyen_lieu}>
+                                                        <label className="form-check-label fw-semibold text-truncate mb-0 cursor-pointer" style={{ maxWidth: '85%' }} htmlFor={`search-ing-${item.id}`} title={item.ten_nguyen_lieu}>
                                                             {esc(item.ten_nguyen_lieu)}
                                                         </label>
                                                     </div>
@@ -470,55 +520,49 @@ export default function Recipes() {
                 </div>
             )}
 
-            {/* TAB 2: LẬP THỰC ĐƠN THÔNG MINH (3 CHẾ ĐỘ) */}
+            {/* TAB 2: LẬP THỰC ĐƠN THÔNG MINH (2 CHẾ ĐỘ RÕ RÀNG) */}
             {activeTab === 'menu' && (
                 <div>
                     <div className="card shadow-sm border-0 rounded-4 p-4 mb-4 bg-white">
-                        {/* Thanh chọn 3 Chế Độ */}
+                        {/* 2 Chế Độ Lập Thực Đơn */}
                         <div className="mb-4">
                             <label className="form-label fw-bold text-dark mb-2 fs-5">
-                                🎯 Chọn Chế Độ Lập Thực Đơn:
+                                🎯 Chọn Phương Thức Lập Mâm Cơm:
                             </label>
                             <div className="row g-3">
-                                <div className="col-md-4">
+                                <div className="col-md-6">
                                     <div
-                                        className={`p-3 rounded-4 border cursor-pointer h-100 transition-all ${menuMode === 'mode1' ? 'border-success bg-success bg-opacity-10 shadow-sm' : 'bg-light'}`}
-                                        onClick={() => setMenuMode('mode1')}
+                                        className={`recipe-mode-btn ${menuMode === 'ingredients' ? 'mode-active-ing' : 'mode-inactive'}`}
+                                        onClick={() => setMenuMode('ingredients')}
                                     >
                                         <div className="d-flex align-items-center gap-2 mb-2">
-                                            <span className="badge rounded-pill bg-success px-2.5 py-1">🟢 Chế độ 1</span>
-                                            <h6 className="fw-bold mb-0 text-dark">Có nhiều nguyên liệu</h6>
+                                            <span style={{ backgroundColor: '#16a34a', color: '#ffffff', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                                Chế độ 1
+                                            </span>
+                                            <h6 className="fw-bold mb-0" style={{ color: '#15803d', fontSize: '1.05rem' }}>
+                                                🥗 Lập thực đơn theo nguyên liệu có sẵn
+                                            </h6>
                                         </div>
-                                        <p className="text-muted small mb-0">
-                                            Tối ưu mâm cơm tận dụng tối đa các nguyên liệu bạn đang có trong tủ lạnh.
+                                        <p style={{ color: '#4b5563', fontSize: '0.875rem', lineHeight: '1.5', margin: 0 }}>
+                                            Tối ưu mâm cơm ưu tiên nấu từ các nguyên liệu có sẵn trong tủ lạnh của bạn. Nếu kho nguyên liệu chưa đủ số ngày, hệ thống sẽ tự động bổ sung thêm món phụ để đảm bảo không trùng lặp.
                                         </p>
                                     </div>
                                 </div>
-                                <div className="col-md-4">
+                                <div className="col-md-6">
                                     <div
-                                        className={`p-3 rounded-4 border cursor-pointer h-100 transition-all ${menuMode === 'mode2' ? 'border-warning bg-warning bg-opacity-10 shadow-sm' : 'bg-light'}`}
-                                        onClick={() => setMenuMode('mode2')}
+                                        className={`recipe-mode-btn ${menuMode === 'preferences' ? 'mode-active-pref' : 'mode-inactive'}`}
+                                        onClick={() => setMenuMode('preferences')}
                                     >
                                         <div className="d-flex align-items-center gap-2 mb-2">
-                                            <span className="badge rounded-pill bg-warning text-dark px-2.5 py-1">🟡 Chế độ 2</span>
-                                            <h6 className="fw-bold mb-0 text-dark">Có ít nguyên liệu</h6>
+                                            <span style={{ backgroundColor: '#2563eb', color: '#ffffff', padding: '3px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                                Chế độ 2
+                                            </span>
+                                            <h6 className="fw-bold mb-0" style={{ color: '#1d4ed8', fontSize: '1.05rem' }}>
+                                                🎯 Lập thực đơn theo sở thích & Khẩu vị
+                                            </h6>
                                         </div>
-                                        <p className="text-muted small mb-0">
-                                            Chỉ có 1-2 món? Hệ thống sẽ gợi ý mâm cơm và lên sẵn danh sách cần mua bổ sung.
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="col-md-4">
-                                    <div
-                                        className={`p-3 rounded-4 border cursor-pointer h-100 transition-all ${menuMode === 'mode3' ? 'border-primary bg-primary bg-opacity-10 shadow-sm' : 'bg-light'}`}
-                                        onClick={() => setMenuMode('mode3')}
-                                    >
-                                        <div className="d-flex align-items-center gap-2 mb-2">
-                                            <span className="badge rounded-pill bg-primary px-2.5 py-1">🔵 Chế độ 3</span>
-                                            <h6 className="fw-bold mb-0 text-dark">Theo sở thích & Nhu cầu</h6>
-                                        </div>
-                                        <p className="text-muted small mb-0">
-                                            Không cần nhập nguyên liệu. Tự động lập thực đơn theo độ khó, thời gian & khẩu vị.
+                                        <p style={{ color: '#4b5563', fontSize: '0.875rem', lineHeight: '1.5', margin: 0 }}>
+                                            Dành cho người chưa có sẵn nguyên liệu. Tự động thiết lập mâm cơm đầy đủ chất dinh dưỡng theo độ khó, thời gian chế biến và phong cách ẩm thực mong muốn.
                                         </p>
                                     </div>
                                 </div>
@@ -526,13 +570,13 @@ export default function Recipes() {
                         </div>
 
                         <form onSubmit={handleGenerateMenu}>
-                            {/* CHẾ ĐỘ 1 VÀ 2: CHỌN NGUYÊN LIỆU TRONG TỦ LẠNH */}
-                            {(menuMode === 'mode1' || menuMode === 'mode2') && (
+                            {/* CHẾ ĐỘ 1: CHỌN NGUYÊN LIỆU TRONG TỦ LẠNH */}
+                            {menuMode === 'ingredients' && (
                                 <div className="mb-4">
                                     <div className="d-flex justify-content-between align-items-center mb-3">
                                         <h5 className="fw-bold text-dark mb-0">
                                             <i className="fas fa-refrigerator me-2 text-success"></i>
-                                            {menuMode === 'mode1' ? '1. Chọn các nguyên liệu có trong tủ lạnh (tối thiểu 2 món):' : '1. Chọn nguyên liệu bạn đang có (1 hoặc 2 món):'}
+                                            Chọn nguyên liệu bạn đang có trong tủ lạnh (chọn ít nhất 1 món):
                                         </h5>
                                         {selectedIngredients.length > 0 && (
                                             <span className="badge bg-success rounded-pill px-3 py-1.5">
@@ -550,15 +594,19 @@ export default function Recipes() {
                                                 <div className="row g-2 pe-1" style={{ maxHeight: '160px', overflowY: 'auto' }}>
                                                     {ingredientGroups[category].map(item => (
                                                         <div className="col-md-3 col-6" key={item.id}>
-                                                            <div className={`form-check border p-2 rounded-3 hover-shadow ${selectedIngredients.includes(item.id) ? 'bg-success bg-opacity-10 border-success' : 'bg-light'}`}>
+                                                            <div
+                                                                className={`ing-checkbox-item ${selectedIngredients.includes(item.id) ? 'checked' : 'unchecked'}`}
+                                                                onClick={() => handleMenuCheckbox(item.id)}
+                                                            >
                                                                 <input
-                                                                    className="form-check-input ms-1"
+                                                                    className="form-check-input ms-1 me-2"
                                                                     type="checkbox"
                                                                     id={`ing-${item.id}`}
                                                                     checked={selectedIngredients.includes(item.id)}
-                                                                    onChange={() => handleMenuCheckbox(item.id)}
+                                                                    onChange={() => {}}
+                                                                    style={{ cursor: 'pointer' }}
                                                                 />
-                                                                <label className="form-check-label ms-2 fw-semibold text-dark cursor-pointer text-truncate" style={{ maxWidth: '85%' }} htmlFor={`ing-${item.id}`} title={item.ten_nguyen_lieu}>
+                                                                <label className="form-check-label fw-semibold text-truncate mb-0 cursor-pointer" style={{ maxWidth: '85%' }} htmlFor={`ing-${item.id}`} title={item.ten_nguyen_lieu}>
                                                                     {esc(item.ten_nguyen_lieu)}
                                                                 </label>
                                                             </div>
@@ -571,8 +619,8 @@ export default function Recipes() {
                                 </div>
                             )}
 
-                            {/* CHẾ ĐỘ 3: CHỌN THEO SỞ THÍCH & NHU CẦU */}
-                            {menuMode === 'mode3' && (
+                            {/* CHẾ ĐỘ 2: CHỌN THEO SỞ THÍCH & NHU CẦU */}
+                            {menuMode === 'preferences' && (
                                 <div className="mb-4 p-4 rounded-4 bg-light border">
                                     <h5 className="fw-bold text-primary mb-3">
                                         <i className="fas fa-sliders-h me-2"></i> Thiết Lập Khẩu Vị & Nhu Cầu Dinh Dưỡng:
@@ -686,154 +734,43 @@ export default function Recipes() {
                                 </span>
                             </div>
 
-                            {/* DANH SÁCH ĐI CHỢ BỔ SUNG (SHOPPING LIST CHO CHẾ ĐỘ 1 & 2) */}
-                            {menuSummary?.shoppingList && menuSummary.shoppingList.length > 0 && (
-                                <div className="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white border-start border-4 border-warning">
-                                    <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                                        <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                            <i className="fas fa-shopping-cart text-warning fs-4"></i>
-                                            Danh Sách Đi Chợ Bổ Sung Cho Thực Đơn ({menuSummary.shoppingList.length} món cần mua):
-                                        </h5>
-                                        <button
-                                            type="button"
-                                            className="btn btn-outline-success btn-sm rounded-pill px-3 fw-semibold"
-                                            onClick={handleCopyShoppingList}
-                                        >
-                                            <i className="fas fa-copy me-1"></i> Sao Chép Danh Sách Đi Chợ
-                                        </button>
-                                    </div>
-                                    <p className="text-muted small mb-3">
-                                        Dưới đây là các nguyên liệu cần mua bổ sung để hoàn thành trọn vẹn tất cả các món ăn trong thực đơn {days} ngày của bạn:
-                                    </p>
-                                    <div className="row g-2">
-                                        {menuSummary.shoppingList.map((item, idx) => (
-                                            <div className="col-md-4 col-sm-6" key={idx}>
-                                                <div className="p-2.5 rounded-3 bg-light border d-flex justify-content-between align-items-center small">
-                                                    <div>
-                                                        <strong className="text-dark">🛒 {item.ten}</strong>
-                                                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                                                            Dùng cho: {item.dishes.slice(0, 2).join(', ')}{item.dishes.length > 2 ? '...' : ''}
-                                                        </div>
-                                                    </div>
-                                                    {item.so_luong && (
-                                                        <span className="badge bg-success bg-opacity-10 text-success border border-success">
-                                                            {item.so_luong} {item.don_vi}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             {/* Danh sách mâm cơm từng ngày */}
-                            <div className="row g-4">
+                            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                                 {menuResult.map((item, index) => (
-                                    <div className="col-md-6 col-lg-4" key={index}>
-                                        <div className="card h-100 shadow-sm border-0 rounded-4 overflow-hidden bg-white">
-                                            <div className="card-header bg-success text-white fw-bold text-center py-3 fs-5">
+                                    <div className="col" key={index}>
+                                        <div className="menu-day-card">
+                                            <div className="menu-day-header">
                                                 <i className="fas fa-calendar-check me-2"></i> {item.ngay}
                                             </div>
-                                            <div className="card-body p-3 d-flex flex-column gap-3">
+                                            <div className="menu-day-body">
                                                 {/* BỮA TRƯA */}
                                                 {item.bua_trua && (
-                                                    <div className="p-3 border rounded-3 bg-light">
-                                                        <h6 className="fw-bold text-primary mb-2 border-bottom pb-1">
-                                                            ☀️ Bữa Trưa
-                                                        </h6>
-                                                        <div className="d-flex flex-column gap-2 small">
-                                                            {item.bua_trua.mon_canh && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_trua.mon_canh)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍲 <strong>Canh:</strong> {esc(item.bua_trua.mon_canh.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_trua.mon_man && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_trua.mon_man)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍖 <strong>Mặn:</strong> {esc(item.bua_trua.mon_man.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_trua.mon_xao_ran && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_trua.mon_xao_ran)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍳 <strong>Xào:</strong> {esc(item.bua_trua.mon_xao_ran.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_trua.trang_mieng && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_trua.trang_mieng)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍉 <strong>Tráng miệng:</strong> {esc(item.bua_trua.trang_mieng.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
+                                                    <div className="meal-box meal-box-lunch">
+                                                        <div className="meal-box-title">
+                                                            <span>☀️ Bữa Trưa (4 món)</span>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#a16207' }}>Mâm trưa</span>
+                                                        </div>
+                                                        <div className="d-flex flex-column">
+                                                            <MealDishRow dish={item.bua_trua.mon_man} typeKey="mon_man" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_trua.mon_xao_ran} typeKey="mon_xao_ran" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_trua.mon_canh} typeKey="mon_canh" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_trua.trang_mieng} typeKey="trang_mieng" onOpenDetail={handleOpenDetail} />
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 {/* BỮA TỐI */}
                                                 {item.bua_toi && (
-                                                    <div className="p-3 border rounded-3 bg-light">
-                                                        <h6 className="fw-bold text-danger mb-2 border-bottom pb-1">
-                                                            🌙 Bữa Tối
-                                                        </h6>
-                                                        <div className="d-flex flex-column gap-2 small">
-                                                            {item.bua_toi.mon_canh && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_toi.mon_canh)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍲 <strong>Canh:</strong> {esc(item.bua_toi.mon_canh.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_toi.mon_man && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_toi.mon_man)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍖 <strong>Mặn:</strong> {esc(item.bua_toi.mon_man.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_toi.mon_xao_ran && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_toi.mon_xao_ran)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍳 <strong>Xào:</strong> {esc(item.bua_toi.mon_xao_ran.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
-                                                            {item.bua_toi.trang_mieng && (
-                                                                <div
-                                                                    className="d-flex align-items-center justify-content-between p-1.5 rounded hover-bg cursor-pointer"
-                                                                    onClick={() => handleOpenDetail(item.bua_toi.trang_mieng)}
-                                                                    title="Bấm để xem công thức"
-                                                                >
-                                                                    <span>🍉 <strong>Tráng miệng:</strong> {esc(item.bua_toi.trang_mieng.ten_mon)}</span>
-                                                                    <i className="fas fa-chevron-right text-muted small"></i>
-                                                                </div>
-                                                            )}
+                                                    <div className="meal-box meal-box-dinner">
+                                                        <div className="meal-box-title">
+                                                            <span>🌙 Bữa Tối (4 món)</span>
+                                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#15803d' }}>Mâm tối</span>
+                                                        </div>
+                                                        <div className="d-flex flex-column">
+                                                            <MealDishRow dish={item.bua_toi.mon_man} typeKey="mon_man" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_toi.mon_xao_ran} typeKey="mon_xao_ran" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_toi.mon_canh} typeKey="mon_canh" onOpenDetail={handleOpenDetail} />
+                                                            <MealDishRow dish={item.bua_toi.trang_mieng} typeKey="trang_mieng" onOpenDetail={handleOpenDetail} />
                                                         </div>
                                                     </div>
                                                 )}
