@@ -1,14 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { imgUrl, esc } from '../utils/img';
 import './RecipeDetailModal.css';
 
 export default function RecipeDetailModal({ dish, isOpen, onClose }) {
     const [checkedIngredients, setCheckedIngredients] = useState({});
+    const backdropRef = useRef(null);
+    const dialogRef = useRef(null);
 
-    // Reset checked items when modal opens with a new dish
+    // Reset checked items and scroll position to top when modal opens with a new dish
     useEffect(() => {
         setCheckedIngredients({});
     }, [dish?.id]);
+
+    // Lock body scroll and reset scroll to top on open
+    useEffect(() => {
+        if (isOpen) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+
+            // Reset scroll to top
+            if (backdropRef.current) backdropRef.current.scrollTop = 0;
+            if (dialogRef.current) dialogRef.current.scrollTop = 0;
+            window.scrollTo({ top: window.scrollY }); // Prevent jumping
+
+            return () => {
+                document.body.style.overflow = originalOverflow;
+            };
+        }
+    }, [isOpen, dish?.id]);
 
     // Listen for ESC key
     useEffect(() => {
@@ -63,8 +82,8 @@ export default function RecipeDetailModal({ dish, isOpen, onClose }) {
     const diffStyle = difficultyColors[dish.do_kho] || difficultyColors['Dễ'];
 
     return (
-        <div className="recipe-modal-backdrop" onClick={onClose}>
-            <div className="recipe-modal-dialog" onClick={e => e.stopPropagation()}>
+        <div className="recipe-modal-backdrop" ref={backdropRef} onClick={onClose}>
+            <div className="recipe-modal-dialog" ref={dialogRef} onClick={e => e.stopPropagation()}>
                 {/* Hero Header */}
                 <div className="recipe-modal-hero">
                     <img src={imgUrl(dish.hinh_anh)} alt={esc(dish.ten_mon)} />
@@ -73,12 +92,13 @@ export default function RecipeDetailModal({ dish, isOpen, onClose }) {
                         className="recipe-modal-close"
                         onClick={onClose}
                         title="Đóng (Esc)"
+                        aria-label="Đóng"
                     >
                         <i className="fas fa-times"></i>
                     </button>
                     <div className="recipe-modal-hero-overlay">
                         <div className="d-flex align-items-center gap-2 mb-2">
-                            <span className="badge rounded-pill bg-success px-3 py-1 text-white">
+                            <span className="badge rounded-pill bg-success px-3 py-1 text-white shadow-sm">
                                 <i className="fas fa-utensils me-1"></i> {dish.loai_mon || 'Món ăn'}
                             </span>
                             {dish.do_kho && (
@@ -267,6 +287,17 @@ export default function RecipeDetailModal({ dish, isOpen, onClose }) {
                             ))}
                         </div>
                     )}
+
+                    {/* MODAL BOTTOM ACTIONS */}
+                    <div className="recipe-modal-footer">
+                        <button
+                            type="button"
+                            className="btn btn-light border rounded-pill px-4 py-2 fw-semibold text-secondary d-flex align-items-center gap-2"
+                            onClick={onClose}
+                        >
+                            <i className="fas fa-times"></i> Đóng cửa sổ
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -8,46 +8,47 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.7);
+    background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 1050;
-    padding: 20px;
+    padding: 30px 16px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     animation: rModalFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .recipe-modal-dialog {
     background: #ffffff;
     border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08);
     width: 100%;
     max-width: 860px;
-    max-height: 90vh;
-    overflow-y: auto;
-    overflow-x: hidden;
+    margin: auto 0;
     position: relative;
     animation: rModalScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-/* Custom scrollbar */
-.recipe-modal-dialog::-webkit-scrollbar {
+/* Custom scrollbar on backdrop */
+.recipe-modal-backdrop::-webkit-scrollbar {
     width: 8px;
 }
-.recipe-modal-dialog::-webkit-scrollbar-track {
-    background: #f1f5f9;
+.recipe-modal-backdrop::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+}
+.recipe-modal-backdrop::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 8px;
 }
-.recipe-modal-dialog::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 8px;
-}
-.recipe-modal-dialog::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
+.recipe-modal-backdrop::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 /* Modal Hero Banner */
@@ -408,6 +409,17 @@
     color: #ffffff;
     border-color: #10b981;
     transform: translateY(-1px);
+}
+
+/* Modal Bottom Actions Footer */
+.recipe-modal-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
 }
 
 /* Animations */

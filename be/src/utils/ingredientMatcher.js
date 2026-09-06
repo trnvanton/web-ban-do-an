@@ -27,7 +27,7 @@ const CULINARY_SYNONYMS = {
     'rau ngổ': ['ngò om'],
     'đậu hũ': ['đậu phụ', 'tàu hũ'],
     'đậu phụ': ['đậu hũ', 'tàu hũ'],
-    'thịt băm': ['thịt xay', 'nạc vai xay', 'nạc xay', 'thịt heo xay'],
+    'thịt băm': ['thịt xay', 'nạc vai xay', 'nạc xay', 'thịt heo xay', 'thịt nạc xay'],
     'thịt xay': ['thịt băm'],
     'lạc': ['đậu phộng'],
     'đậu phộng': ['lạc'],
@@ -79,7 +79,7 @@ function getIngredientSearchKeys(name) {
         if (stripped.startsWith('tôm')) keys.add('tôm');
         if (stripped.startsWith('mực')) keys.add('mực');
         if (stripped.startsWith('cua')) keys.add('cua');
-        if (stripped.startsWith('cá ')) keys.add(stripped);
+        if (stripped.startsWith('cá ') || stripped === 'cá phi lê') keys.add('cá');
         if (stripped === 'thịt bò' || stripped.includes('thịt bò')) {
             keys.add('thịt bò');
             keys.add('bò');
@@ -108,18 +108,50 @@ function getIngredientSearchKeys(name) {
     return [...keys].filter(k => k.length >= 2);
 }
 
+function escapeRegex(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const VN_LETTERS = 'a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ';
+
+/**
+ * Kiểm tra xem `phrase` có xuất hiện như một từ / cụm từ độc lập trong `text` không (Word Boundary Check)
+ * Ngăn chặn lỗi chuỗi con: "miếng" chứa "miến", "cát" chứa "cá", "cách" chứa "cá", "mẹo" chứa "me", v.v.
+ */
+function containsWholePhrase(text, phrase) {
+    if (!text || !phrase) return false;
+    const cleanText = text.toLowerCase();
+    const cleanPhrase = phrase.toLowerCase().trim();
+    if (!cleanPhrase) return false;
+
+    // Phân tách ranh giới từ tiếng Việt: trước và sau cụm từ phải là ký tự không phải chữ cái/số hoặc đầu/cuối chuỗi
+    const pattern = `(^|[^${VN_LETTERS}])${escapeRegex(cleanPhrase)}($|[^${VN_LETTERS}])`;
+    const regex = new RegExp(pattern, 'i');
+    return regex.test(cleanText);
+}
+
 /**
  * Xây dựng chuỗi văn bản đại diện cho món ăn để tìm kiếm
  */
 function getDishSearchCorpus(dish) {
     if (!dish) return '';
+    const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
+    
+    // Lấy danh sách tên nguyên liệu định lượng
+    const nguyenLieuList = parseJSON(dish.nguyen_lieu_chi_tiet, []);
+    const ingNames = Array.isArray(nguyenLieuList) ? nguyenLieuList.map(i => i.ten || '').join(' ') : '';
+    
+    // Bỏ gia vị "nước mắm cốt cá" để tránh hiểu nhầm "cá" khi tìm cá hải sản
+    const cleanNgLieuChinh = (dish.nguyen_lieu_chinh || '')
+        .replace(/nước mắm[^,]*/gi, '')
+        .replace(/mắm cá[^,]*/gi, '');
+
     const parts = [
         dish.ten_mon || '',
-        dish.nguyen_lieu_chinh || '',
-        dish.mo_ta || '',
-        typeof dish.nguyen_lieu_chi_tiet === 'string' ? dish.nguyen_lieu_chi_tiet : JSON.stringify(dish.nguyen_lieu_chi_tiet || ''),
-        typeof dish.tags === 'string' ? dish.tags : JSON.stringify(dish.tags || ''),
-        dish.loai_mon || ''
+        cleanNgLieuChinh,
+        ingNames,
+        dish.loai_mon || '',
+        typeof dish.tags === 'string' ? dish.tags : JSON.stringify(dish.tags || '')
     ];
     return parts.join(' ').toLowerCase();
 }
@@ -131,7 +163,7 @@ function matchDishWithIngredient(dish, ingredientName) {
     const keys = getIngredientSearchKeys(ingredientName);
     if (keys.length === 0) return false;
     const corpus = getDishSearchCorpus(dish);
-    return keys.some(k => corpus.includes(k));
+    return keys.some(k => containsWholePhrase(corpus, k));
 }
 
 /**
@@ -165,6 +197,7 @@ module.exports = {
     CULINARY_SYNONYMS,
     getIngredientSearchKeys,
     getDishSearchCorpus,
+    containsWholePhrase,
     matchDishWithIngredient,
     filterAndRankDishes
 };
