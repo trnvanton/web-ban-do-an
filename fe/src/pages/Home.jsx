@@ -191,7 +191,7 @@ export default function Home() {
                 <div className="container py-5">
                     {/* Header: Title + Subtitle centered */}
                     <div className="text-center mb-4">
-                        <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-1.5 rounded-pill fw-bold text-uppercase mb-2">
+                        <span className="badge badge-soft-primary px-3 py-1.5 rounded-pill fw-bold text-uppercase mb-2 shadow-sm">
                             <i className="fas fa-utensils me-1"></i> Thực Đơn &amp; Món Ăn Bán Chạy
                         </span>
                         <h1 className="display-6 fw-bold text-dark mb-2">Thực Đơn Đặt Món Trực Tuyến</h1>
@@ -482,7 +482,7 @@ export default function Home() {
             <div className="container-fluid testimonial py-5 bg-light bg-opacity-50">
                 <div className="container py-4">
                     <div className="testimonial-header text-center mb-5">
-                        <span className="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase mb-2">
+                        <span className="badge badge-soft-primary px-3 py-2 rounded-pill fw-bold text-uppercase mb-2 shadow-sm">
                             <i className="fas fa-hat-chef me-1"></i> Gợi Ý Món Ngon Hàng Ngày
                         </span>
                         <h1 className="display-6 fw-bold text-dark mb-2">Hôm Nay Bạn Muốn Nấu Món Gì?</h1>
@@ -518,7 +518,7 @@ export default function Home() {
                                                     alt={esc(d.ten_mon)}
                                                 />
                                                 <div className="position-absolute top-0 start-0 m-3">
-                                                    <span className="badge rounded-pill bg-dark bg-opacity-75 text-white px-2.5 py-1.5 shadow-sm small">
+                                                    <span className="badge rounded-pill badge-soft-dark text-white px-2.5 py-1.5 shadow-sm small">
                                                         <i className="fas fa-utensils me-1"></i> {esc(d.loai_mon || 'Món mặn')}
                                                     </span>
                                                 </div>

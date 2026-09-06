@@ -184,7 +184,7 @@ export default function ShopDetail() {
                         <div className="col-lg-6">
                             <div className="bg-white rounded-4 shadow-sm border p-4 text-center position-relative overflow-hidden" style={{ minHeight: 400 }}>
                                 <div className="position-absolute top-0 start-0 m-3 z-index-2">
-                                    <span className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-bold small">
+                                    <span className="badge badge-soft-primary px-3 py-2 rounded-pill fw-bold small shadow-sm">
                                         <i className="fas fa-utensils me-1"></i> {product.danh_muc || 'Món ngon'}
                                     </span>
                                 </div>
@@ -221,11 +221,11 @@ export default function ShopDetail() {
                                 </div>
                                 <span className="text-muted">|</span>
                                 {isOutOfStock ? (
-                                    <span className="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2.5 py-1 rounded-pill small">
+                                    <span className="badge badge-soft-danger px-3 py-1.5 rounded-pill small fw-bold">
                                         <i className="fas fa-times-circle me-1"></i> Tạm hết hàng
                                     </span>
                                 ) : (
-                                    <span className="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2.5 py-1 rounded-pill small">
+                                    <span className="badge badge-soft-success px-3 py-1.5 rounded-pill small fw-bold">
                                         <i className="fas fa-check-circle me-1"></i> Còn {stock} suất trong kho
                                     </span>
                                 )}

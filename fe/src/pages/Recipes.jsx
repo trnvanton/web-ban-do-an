@@ -26,7 +26,7 @@ function RecipeCard({ dish, onSelectDish }) {
                         alt={esc(dish.ten_mon)}
                     />
                     <div className="position-absolute top-0 start-0 m-3 d-flex gap-2">
-                        <span className="badge rounded-pill bg-dark bg-opacity-75 text-white px-3 py-1.5 shadow-sm">
+                        <span className="badge rounded-pill badge-soft-dark text-white px-3 py-1.5 shadow-sm">
                             <i className="fas fa-utensils me-1"></i> {dish.loai_mon || 'Món mặn'}
                         </span>
                     </div>
