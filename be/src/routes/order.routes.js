@@ -110,7 +110,7 @@ router.get('/admin/don-hang', requireAdmin, async (req, res) => {
 const TRANG_THAI_HOP_LE = ['Chờ xử lý', 'Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
 const ALLOWED_TRANSITIONS = {
     'Chờ xử lý': ['Chờ xử lý', 'Đang giao', 'Đã hủy'],
-    'Đang giao': ['Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'],
+    'Đang giao': ['Đang giao', 'Đã giao', 'Đã hủy'],
     'Đã giao': ['Đã giao', 'Đã hoàn thành'],
     'Đã hoàn thành': ['Đã hoàn thành'],
     'Đã hủy': ['Đã hủy']

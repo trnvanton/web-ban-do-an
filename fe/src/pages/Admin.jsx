@@ -35,7 +35,7 @@ const getAllowedNextStatuses = (currentStatus) => {
         case 'Chờ xử lý':
             return ['Chờ xử lý', 'Đang giao', 'Đã hủy'];
         case 'Đang giao':
-            return ['Đang giao', 'Đã giao', 'Đã hoàn thành', 'Đã hủy'];
+            return ['Đang giao', 'Đã giao', 'Đã hủy'];
         case 'Đã giao':
             return ['Đã giao', 'Đã hoàn thành'];
         case 'Đã hoàn thành':
