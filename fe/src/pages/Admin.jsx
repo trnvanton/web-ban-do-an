@@ -1230,7 +1230,7 @@ export default function Admin() {
                                                                 <td>
                                                                     {o.phuong_thuc_thanh_toan === 'BANK_QR' ? (
                                                                         <div>
-                                                                            {o.trang_thai_thanh_toan === 'Đã thanh toán (QR)' ? (
+                                                                            {(o.trang_thai_thanh_toan || '').includes('Đã thanh toán') ? (
                                                                                 <span className="badge-pill-custom badge-success-soft">
                                                                                     <i className="fas fa-check-circle"></i> Đã CK QR
                                                                                 </span>

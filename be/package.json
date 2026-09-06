@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "sync-d1": "node scripts/sync_to_d1.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
