@@ -234,16 +234,20 @@
 }
 
 @media (min-width: 992px) {
-    .hero-header,
+    .hero-header {
+        margin-top: 20px;
+    }
     .page-header {
-        margin-top: 152px !important;
+        margin-top: 0 !important;
     }
 }
 
 @media (max-width: 992px) {
-    .hero-header,
+    .hero-header {
+        margin-top: 10px;
+    }
     .page-header {
-        margin-top: 97px !important;
+        margin-top: 0 !important;
     }
 }
 /*** Hero Header end ***/

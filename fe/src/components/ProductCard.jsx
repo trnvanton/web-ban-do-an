@@ -60,6 +60,7 @@ export default function ProductCard({ p, compact = false }) {
                             className="img-fluid rounded transition-transform img-hover-zoom"
                             style={{ maxHeight: '150px', objectFit: 'contain' }}
                             alt={p.ten_san_pham}
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/img/fruite-item-1.jpg'; }}
                         />
                     </Link>
                     {/* Badge Danh Mục */}

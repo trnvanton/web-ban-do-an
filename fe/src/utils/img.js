@@ -5,9 +5,13 @@
 // ============================================================
 export function imgUrl(name) {
     if (!name) return '/img/fruite-item-1.jpg';
-    const s = String(name);
-    if (s.startsWith('http')) return s;
-    if (/^\d/.test(s)) return '/img/' + s;
+    const s = String(name).trim();
+    if (!s) return '/img/fruite-item-1.jpg';
+    if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('blob:') || s.startsWith('data:')) return s;
+    if (s.startsWith('/uploads/') || s.startsWith('uploads/')) return '/' + s.replace(/^\/+/, '');
+    if (s.startsWith('/img/') || s.startsWith('img/')) return '/' + s.replace(/^\/+/, '');
+    // Tên file bắt đầu bằng chữ số (timestamp của upload) -> phục vụ tại /uploads
+    if (/^\d/.test(s)) return '/uploads/' + s;
     return '/img/' + s;
 }
 
