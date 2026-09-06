@@ -81,8 +81,8 @@ router.post('/don-hang', async (req, res) => {
             const qty = Number(item.quantity || item.so_luong);
             if (pId > 0 && qty > 0) {
                 await query(
-                    'UPDATE san_pham SET so_luong_ton = MAX(0, CAST(so_luong_ton AS INTEGER) - ?) WHERE id = ?',
-                    [qty, pId]
+                    'UPDATE san_pham SET so_luong_ton = CASE WHEN so_luong_ton >= ? THEN so_luong_ton - ? ELSE 0 END WHERE id = ?',
+                    [qty, qty, pId]
                 );
             }
         }

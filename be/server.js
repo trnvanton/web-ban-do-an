@@ -18,6 +18,7 @@ const addressRoutes = require('./src/routes/address.routes');
 const userRoutes = require('./src/routes/user.routes');
 const uploadRoutes = require('./src/routes/upload.routes');
 const reviewRoutes = require('./src/routes/review.routes');
+const paymentRoutes = require('./src/routes/payment.routes');
 const { filterAndAnalyzeDishes, filterDishesByPreferences, analyzeDishMatch } = require('./src/utils/ingredientMatcher');
 
 const app = express();
@@ -94,6 +95,7 @@ app.use('/api', addressRoutes);
 app.use('/api', userRoutes);
 app.use('/api', uploadRoutes);
 app.use('/api', reviewRoutes);
+app.use('/api', paymentRoutes);
 
 // ================= API BỔ SUNG (NGUYÊN LIỆU & MENU) =================
 

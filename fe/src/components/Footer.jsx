@@ -93,7 +93,7 @@ export default function Footer() {
                                     <div className="d-flex gap-2">
                                         <span className="badge bg-light text-dark px-2 py-1 border fw-bold"><i className="fas fa-qrcode text-primary me-1"></i>VietQR</span>
                                         <span className="badge bg-light text-dark px-2 py-1 border fw-bold"><i className="fas fa-money-bill-wave text-success me-1"></i>COD</span>
-                                        <span className="badge bg-light text-dark px-2 py-1 border fw-bold"><i className="fas fa-university text-info me-1"></i>Techcombank</span>
+                                        <span className="badge bg-light text-dark px-2 py-1 border fw-bold"><i className="fas fa-university text-info me-1"></i>MBBank</span>
                                     </div>
                                 </div>
                             </div>
