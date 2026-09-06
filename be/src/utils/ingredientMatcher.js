@@ -167,30 +167,186 @@ function matchDishWithIngredient(dish, ingredientName) {
 }
 
 /**
- * Lọc và xếp hạng danh sách món ăn theo các nguyên liệu được chọn
- * Món khớp nhiều nguyên liệu hơn sẽ được xếp lên đầu
+ * Phân tích độ khớp chi tiết giữa món ăn và danh sách nguyên liệu người dùng có
  */
-function filterAndRankDishes(dishes, ingredientNames) {
-    if (!Array.isArray(dishes) || dishes.length === 0) return [];
-    if (!Array.isArray(ingredientNames) || ingredientNames.length === 0) return dishes;
+function analyzeDishMatch(dish, targetIngNames = []) {
+    const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
+    
+    // 1. Lấy danh sách nguyên liệu chi tiết của món ăn
+    let dishIngredients = [];
+    const chiTiet = parseJSON(dish.nguyen_lieu_chi_tiet, []);
+    if (Array.isArray(chiTiet) && chiTiet.length > 0) {
+        dishIngredients = chiTiet.map(item => ({
+            ten: (item.ten || '').trim(),
+            so_luong: item.so_luong || '',
+            don_vi: item.don_vi || '',
+            ghi_chu: item.ghi_chu || ''
+        })).filter(i => i.ten.length > 0);
+    } else if (dish.nguyen_lieu_chinh) {
+        dishIngredients = String(dish.nguyen_lieu_chinh).split(',').map(item => ({
+            ten: item.trim(),
+            so_luong: '',
+            don_vi: '',
+            ghi_chu: ''
+        })).filter(i => i.ten.length > 0);
+    }
 
-    const scored = [];
+    // 2. So khớp từng nguyên liệu
+    const matchedUserIngs = new Set();
+    const matchedDishIngs = [];
+    const missingDishIngs = [];
 
-    for (const dish of dishes) {
-        let matchScore = 0;
-        for (const ingName of ingredientNames) {
-            if (matchDishWithIngredient(dish, ingName)) {
-                matchScore++;
+    // Các gia vị cơ bản thường có sẵn trong bếp (nước mắm, muối, đường, dầu ăn, bột ngọt...)
+    const basicPantryRegex = /^(muối|đường|nước mắm|dầu ăn|tiêu|hạt nêm|bột ngọt|nước lọc|tỏi|hành tím)$/i;
+
+    for (const dIng of dishIngredients) {
+        let isMatched = false;
+        for (const userIng of targetIngNames) {
+            const keys = getIngredientSearchKeys(userIng);
+            if (keys.some(k => containsWholePhrase(dIng.ten, k))) {
+                isMatched = true;
+                matchedUserIngs.add(userIng);
+                matchedDishIngs.push(dIng.ten);
+                break;
             }
         }
-        if (matchScore > 0) {
-            scored.push({ dish, matchScore });
+        if (!isMatched) {
+            // Chỉ thêm vào danh sách cần mua nếu không phải gia vị bếp cơ bản
+            const isBasic = basicPantryRegex.test(dIng.ten.trim());
+            missingDishIngs.push({
+                ...dIng,
+                isBasicPantry: isBasic
+            });
         }
     }
 
-    // Sắp xếp: Món khớp nhiều nguyên liệu nhất đứng đầu
-    scored.sort((a, b) => b.matchScore - a.matchScore);
-    return scored.map(item => item.dish);
+    // 3. Tính toán điểm số & phần trăm khớp
+    const matchScore = matchedUserIngs.size;
+    const totalUserIngs = Math.max(1, targetIngNames.length);
+    const nonBasicMissing = missingDishIngs.filter(i => !i.isBasicPantry);
+
+    let matchPercentage = 0;
+    if (matchScore > 0) {
+        if (targetIngNames.length >= 2) {
+            // Nếu người dùng chọn nhiều nguyên liệu: tỷ lệ % dựa trên số nguyên liệu của họ được dùng
+            const userRatio = matchScore / totalUserIngs;
+            const dishCoverage = matchedDishIngs.length / Math.max(1, dishIngredients.length);
+            matchPercentage = Math.min(100, Math.round((userRatio * 0.7 + dishCoverage * 0.3) * 100));
+        } else {
+            // Nếu người dùng chỉ chọn 1 nguyên liệu: tính theo độ sẵn có của món (cần mua ít đồ nhất = % cao nhất)
+            matchPercentage = Math.max(50, 100 - nonBasicMissing.length * 15);
+        }
+    }
+
+    return {
+        matchScore,
+        matchPercentage,
+        matchedIngredients: [...matchedUserIngs],
+        matchedDishIngredients: matchedDishIngs,
+        missingIngredients: missingDishIngs,
+        missingCount: nonBasicMissing.length
+    };
+}
+
+/**
+ * Lọc và xếp hạng nâng cao cho 3 Chế Độ
+ */
+function filterAndAnalyzeDishes(dishes, targetIngNames = [], mode = 'ingredients') {
+    if (!Array.isArray(dishes) || dishes.length === 0) return [];
+    if (!Array.isArray(targetIngNames) || targetIngNames.length === 0) {
+        return dishes.map(d => ({
+            ...d,
+            analysis: { matchScore: 0, matchPercentage: 0, matchedIngredients: [], missingIngredients: [], missingCount: 0 }
+        }));
+    }
+
+    const analyzed = [];
+
+    for (const dish of dishes) {
+        const analysis = analyzeDishMatch(dish, targetIngNames);
+        if (analysis.matchScore > 0) {
+            analyzed.push({
+                ...dish,
+                analysis
+            });
+        }
+    }
+
+    // Xếp hạng theo chế độ
+    if (targetIngNames.length === 1 || mode === 'few_ingredients') {
+        // Chế độ 2 (Ít nguyên liệu): Ưu tiên món CẦN MUA THÊM ÍT NGUYÊN LIỆU NHẤT
+        analyzed.sort((a, b) => {
+            if (a.analysis.missingCount !== b.analysis.missingCount) {
+                return a.analysis.missingCount - b.analysis.missingCount;
+            }
+            return b.analysis.matchPercentage - a.analysis.matchPercentage;
+        });
+    } else {
+        // Chế độ 1 (Nhiều nguyên liệu): Ưu tiên món KHỚP NHIỀU NGUYÊN LIỆU CÓ SẴN NHẤT
+        analyzed.sort((a, b) => {
+            if (b.analysis.matchScore !== a.analysis.matchScore) {
+                return b.analysis.matchScore - a.analysis.matchScore;
+            }
+            if (b.analysis.matchPercentage !== a.analysis.matchPercentage) {
+                return b.analysis.matchPercentage - a.analysis.matchPercentage;
+            }
+            return a.analysis.missingCount - b.analysis.missingCount;
+        });
+    }
+
+    return analyzed;
+}
+
+/**
+ * Lọc món ăn theo Sở Thích & Tiêu Chí (Chế Độ 3)
+ */
+function filterDishesByPreferences(dishes, preferences = {}) {
+    if (!Array.isArray(dishes) || dishes.length === 0) return [];
+    const { categories, difficulty, maxTime, taste } = preferences;
+
+    return dishes.filter(dish => {
+        // 1. Lọc theo danh mục món
+        if (Array.isArray(categories) && categories.length > 0) {
+            const loai = (dish.loai_mon || '').toLowerCase();
+            const ten = (dish.ten_mon || '').toLowerCase();
+            const matchCat = categories.some(c => {
+                const cleanC = c.toLowerCase();
+                return loai.includes(cleanC) || ten.includes(cleanC);
+            });
+            if (!matchCat) return false;
+        }
+
+        // 2. Lọc theo độ khó
+        if (difficulty && difficulty !== 'all') {
+            if (dish.do_kho !== difficulty) return false;
+        }
+
+        // 3. Lọc theo thời gian nấu
+        if (maxTime && maxTime !== 'all') {
+            const totalTime = (Number(dish.thoi_gian_chuan_bi) || 10) + (Number(dish.thoi_gian_nau) || 15);
+            const limit = Number(maxTime);
+            if (!isNaN(limit) && totalTime > limit) return false;
+        }
+
+        // 4. Lọc theo khẩu vị / tags
+        if (Array.isArray(taste) && taste.length > 0) {
+            const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
+            const tags = parseJSON(dish.tags, []);
+            const tagsStr = (Array.isArray(tags) ? tags.join(' ') : String(tags || '')).toLowerCase();
+            const corpus = `${dish.ten_mon} ${dish.mo_ta} ${tagsStr}`.toLowerCase();
+            const matchTaste = taste.some(t => corpus.includes(t.toLowerCase()));
+            if (!matchTaste) return false;
+        }
+
+        return true;
+    });
+}
+
+/**
+ * Lọc và xếp hạng danh sách món ăn theo các nguyên liệu được chọn (Tương thích ngược)
+ */
+function filterAndRankDishes(dishes, ingredientNames) {
+    return filterAndAnalyzeDishes(dishes, ingredientNames);
 }
 
 module.exports = {
@@ -199,5 +355,9 @@ module.exports = {
     getDishSearchCorpus,
     containsWholePhrase,
     matchDishWithIngredient,
+    analyzeDishMatch,
+    filterAndAnalyzeDishes,
+    filterDishesByPreferences,
     filterAndRankDishes
 };
+

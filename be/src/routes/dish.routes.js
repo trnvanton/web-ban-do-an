@@ -4,7 +4,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
 const { ok, fail } = require('../utils/response');
 const { sanitize, isRequired } = require('../middleware/validate');
-const { filterAndRankDishes } = require('../utils/ingredientMatcher');
+const { filterAndAnalyzeDishes, filterAndRankDishes } = require('../utils/ingredientMatcher');
 
 const router = express.Router();
 
@@ -29,7 +29,8 @@ function formatDish(dish) {
         nguyen_lieu_chi_tiet: parseJSON(dish.nguyen_lieu_chi_tiet, []),
         cac_buoc_thuc_hien: parseJSON(dish.cac_buoc_thuc_hien, []),
         dinh_duong: parseJSON(dish.dinh_duong, null),
-        tags: parseJSON(dish.tags, [])
+        tags: parseJSON(dish.tags, []),
+        analysis: dish.analysis || null
     };
 }
 
@@ -62,6 +63,7 @@ router.get('/mon-an/:id', async (req, res) => {
 router.get('/goi-y-mon-an', async (req, res) => {
     const keyword = sanitize(req.query.keyword || '', 100);
     const ingredients = req.query.ingredients || '';
+    const mode = req.query.mode || '';
 
     try {
         let sql = 'SELECT * FROM mon_an';
@@ -96,7 +98,7 @@ router.get('/goi-y-mon-an', async (req, res) => {
             });
 
             if (targetIngNames.length > 0) {
-                results = filterAndRankDishes(results, targetIngNames);
+                results = filterAndAnalyzeDishes(results, targetIngNames, mode);
             }
         }
 

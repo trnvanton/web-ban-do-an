@@ -54,7 +54,8 @@
 /* Modal Hero Banner */
 .recipe-modal-hero {
     position: relative;
-    height: 280px;
+    min-height: 320px;
+    height: 320px;
     background: #1e293b;
     overflow: hidden;
 }
@@ -73,11 +74,20 @@
 .recipe-modal-hero-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(15,23,42,0.85) 100%);
+    background: linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.6) 50%, rgba(15,23,42,0.92) 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 24px 30px;
+    padding: 24px 30px 48px 30px; /* 48px bottom padding creates clean margin above overlapping metric cards */
+}
+
+.recipe-modal-hero-overlay h2 {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.recipe-modal-hero-overlay p {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+    line-height: 1.5;
 }
 
 .recipe-modal-close {

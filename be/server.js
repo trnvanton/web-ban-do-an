@@ -18,7 +18,7 @@ const addressRoutes = require('./src/routes/address.routes');
 const userRoutes = require('./src/routes/user.routes');
 const uploadRoutes = require('./src/routes/upload.routes');
 const reviewRoutes = require('./src/routes/review.routes');
-const { filterAndRankDishes } = require('./src/utils/ingredientMatcher');
+const { filterAndAnalyzeDishes, filterDishesByPreferences, analyzeDishMatch } = require('./src/utils/ingredientMatcher');
 
 const app = express();
 
@@ -116,7 +116,8 @@ app.get('/api/nguyen-lieu', async (req, res) => {
 
 app.post('/api/menu/generate', async (req, res) => {
     try {
-        const { ingredients, days } = req.body;
+        const { mode, ingredients, days, preferences } = req.body;
+        const totalDays = Math.min(7, Math.max(1, Number(days) || 1));
         
         // 1. Lấy toàn bộ món ăn từ CSDL (đầy đủ thông tin chi tiết)
         const allDishesResult = await query('SELECT * FROM mon_an');
@@ -154,73 +155,147 @@ app.post('/api/menu/generate', async (req, res) => {
         };
         const isMainCourse = (d) => !isDessert(d) && !isSoup(d) && !isStirFry(d);
 
-        const globalMan = allDishes.filter(isMainCourse);
-        const globalXao = allDishes.filter(isStirFry);
-        const globalCanh = allDishes.filter(isSoup);
-        const globalTrangMieng = allDishes.filter(isDessert);
+        let activeMode = mode;
+        let targetIngNames = [];
 
-        // 3. Khớp các món ăn với danh sách nguyên liệu người dùng đã chọn
-        let matchedDishes = [];
+        // Xử lý danh sách nguyên liệu nếu có
         if (ingredients && ingredients.length > 0) {
             const ingArr = Array.isArray(ingredients) ? ingredients.map(Number).filter(Boolean) : [Number(ingredients)].filter(Boolean);
             if (ingArr.length > 0) {
                 const placeholders = ingArr.map(() => '?').join(',');
                 const ingRows = await query(`SELECT id, ten_nguyen_lieu FROM nguyen_lieu WHERE id IN (${placeholders})`, ingArr);
-                const targetIngNames = (ingRows || []).map(r => r.ten_nguyen_lieu);
-
-                if (targetIngNames.length > 0) {
-                    matchedDishes = filterAndRankDishes(allDishes, targetIngNames);
-                }
+                targetIngNames = (ingRows || []).map(r => r.ten_nguyen_lieu);
             }
         }
 
-        const matchedMan = matchedDishes.filter(isMainCourse);
-        const matchedXao = matchedDishes.filter(isStirFry);
-        const matchedCanh = matchedDishes.filter(isSoup);
-        const matchedTrangMieng = matchedDishes.filter(isDessert);
+        // Tự động suy luận mode nếu không chỉ định rõ
+        if (!activeMode) {
+            if (targetIngNames.length >= 2) activeMode = 'ingredients'; // Chế độ 1
+            else if (targetIngNames.length === 1) activeMode = 'few_ingredients'; // Chế độ 2
+            else activeMode = 'preferences'; // Chế độ 3
+        }
 
-        // 4. Sinh mâm cơm tự động (không trùng lặp món trong ngày)
-        const totalDays = Number(days) || 1;
-        const selectedMenu = [];
+        let basePool = allDishes;
+        let modeLabel = '';
+
+        if (activeMode === 'preferences') {
+            modeLabel = '🔵 Chế độ 3 — Lập thực đơn theo Sở thích & Nhu cầu';
+            // Lọc theo các tiêu chí sở thích nếu có
+            if (preferences && typeof preferences === 'object') {
+                const filtered = filterDishesByPreferences(allDishes, preferences);
+                if (filtered.length >= 4) {
+                    basePool = filtered;
+                }
+            }
+        } else if (activeMode === 'few_ingredients') {
+            modeLabel = `🟡 Chế độ 2 — Có ít nguyên liệu (${targetIngNames.join(', ')}) & Đề xuất đi chợ mua bổ sung`;
+        } else {
+            modeLabel = `🟢 Chế độ 1 — Gợi ý thực đơn tối ưu theo nguyên liệu có sẵn (${targetIngNames.join(', ')})`;
+        }
+
+        // Gắn phân tích nguyên liệu cho từng món
+        const analyzedDishes = basePool.map(d => ({
+            ...d,
+            analysis: analyzeDishMatch(d, targetIngNames)
+        }));
+
+        // Phân tách pool theo loại món
+        const poolMan = analyzedDishes.filter(isMainCourse);
+        const poolXao = analyzedDishes.filter(isStirFry);
+        const poolCanh = analyzedDishes.filter(isSoup);
+        const poolTrangMieng = analyzedDishes.filter(isDessert);
+
+        // Sinh mâm cơm tự động thông minh
         const usedOverallIds = new Set();
+        const selectedMenu = [];
+        const aggregatedShoppingMap = new Map();
+
+        const pickSmartDish = (categoryPool, globalPool, usedToday) => {
+            const available = categoryPool.filter(d => !usedToday.has(d.id));
+            let candidates = available.filter(d => !usedOverallIds.has(d.id));
+            if (candidates.length === 0) candidates = available;
+            if (candidates.length === 0) candidates = globalPool.filter(d => !usedToday.has(d.id));
+            if (candidates.length === 0) candidates = globalPool;
+
+            // Sắp xếp ưu tiên: món khớp nguyên liệu của user trước, hoặc thiếu ít đồ nhất
+            const sorted = [...candidates].sort((a, b) => {
+                const aScore = a.analysis?.matchScore || 0;
+                const bScore = b.analysis?.matchScore || 0;
+                if (bScore !== aScore) return bScore - aScore;
+                const aMiss = a.analysis?.missingCount || 0;
+                const bMiss = b.analysis?.missingCount || 0;
+                return aMiss - bMiss;
+            });
+
+            const topSlice = sorted.slice(0, Math.min(3, sorted.length));
+            const picked = topSlice[Math.floor(Math.random() * topSlice.length)] || sorted[0] || allDishes[0];
+
+            if (picked && picked.id) {
+                usedToday.add(picked.id);
+                usedOverallIds.add(picked.id);
+
+                // Tổng hợp nguyên liệu cần mua bổ sung vào Shopping List
+                if (picked.analysis && Array.isArray(picked.analysis.missingIngredients)) {
+                    for (const m of picked.analysis.missingIngredients) {
+                        if (!m.isBasicPantry && m.ten) {
+                            const key = m.ten.toLowerCase().trim();
+                            if (aggregatedShoppingMap.has(key)) {
+                                const exist = aggregatedShoppingMap.get(key);
+                                exist.count++;
+                                if (!exist.dishes.includes(picked.ten_mon)) {
+                                    exist.dishes.push(picked.ten_mon);
+                                }
+                            } else {
+                                aggregatedShoppingMap.set(key, {
+                                    ten: m.ten,
+                                    don_vi: m.don_vi || '',
+                                    so_luong: m.so_luong || '',
+                                    count: 1,
+                                    dishes: [picked.ten_mon]
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            return picked;
+        };
 
         for (let day = 1; day <= totalDays; day++) {
             const usedTodayIds = new Set();
-
-            const pickDish = (matchedPool, globalPool) => {
-                let pool = matchedPool.filter(d => !usedTodayIds.has(d.id));
-                if (pool.length === 0) pool = globalPool.filter(d => !usedTodayIds.has(d.id));
-                if (pool.length === 0) pool = globalPool.filter(d => !usedOverallIds.has(d.id));
-                if (pool.length === 0) pool = globalPool.length > 0 ? globalPool : (matchedPool.length > 0 ? matchedPool : allDishes);
-
-                const selected = pool[Math.floor(Math.random() * pool.length)];
-                if (selected && selected.id) {
-                    usedTodayIds.add(selected.id);
-                    usedOverallIds.add(selected.id);
-                }
-                return selected;
-            };
-
             selectedMenu.push({
                 ngay: `Ngày ${day}`,
                 bua_trua: {
                     ten_bua: "Bữa Trưa",
-                    mon_man: pickDish(matchedMan, globalMan),
-                    mon_xao_ran: pickDish(matchedXao, globalXao),
-                    mon_canh: pickDish(matchedCanh, globalCanh),
-                    trang_mieng: pickDish(matchedTrangMieng, globalTrangMieng)
+                    mon_man: pickSmartDish(poolMan, allDishes.filter(isMainCourse), usedTodayIds),
+                    mon_xao_ran: pickSmartDish(poolXao, allDishes.filter(isStirFry), usedTodayIds),
+                    mon_canh: pickSmartDish(poolCanh, allDishes.filter(isSoup), usedTodayIds),
+                    trang_mieng: pickSmartDish(poolTrangMieng, allDishes.filter(isDessert), usedTodayIds)
                 },
                 bua_toi: {
                     ten_bua: "Bữa Tối",
-                    mon_man: pickDish(matchedMan, globalMan),
-                    mon_xao_ran: pickDish(matchedXao, globalXao),
-                    mon_canh: pickDish(matchedCanh, globalCanh),
-                    trang_mieng: pickDish(matchedTrangMieng, globalTrangMieng)
+                    mon_man: pickSmartDish(poolMan, allDishes.filter(isMainCourse), usedTodayIds),
+                    mon_xao_ran: pickSmartDish(poolXao, allDishes.filter(isStirFry), usedTodayIds),
+                    mon_canh: pickSmartDish(poolCanh, allDishes.filter(isSoup), usedTodayIds),
+                    trang_mieng: pickSmartDish(poolTrangMieng, allDishes.filter(isDessert), usedTodayIds)
                 }
             });
         }
 
-        return res.json({ success: true, data: selectedMenu });
+        const shoppingList = Array.from(aggregatedShoppingMap.values()).sort((a, b) => b.count - a.count);
+
+        return res.json({
+            success: true,
+            mode: activeMode,
+            modeLabel,
+            summary: {
+                totalDays,
+                totalMeals: totalDays * 2,
+                userIngredients: targetIngNames,
+                shoppingList
+            },
+            data: selectedMenu
+        });
     } catch (error) {
         console.error("Lỗi hệ thống lập menu:", error);
         return res.status(500).json({ success: false, message: "Lỗi hệ thống." });
