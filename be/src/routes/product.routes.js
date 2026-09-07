@@ -10,7 +10,18 @@ const router = express.Router();
 // ================= SẢN PHẨM (công khai) =================
 router.get('/san-pham', async (req, res) => {
     try {
-        const results = await query('SELECT * FROM san_pham ORDER BY id DESC');
+        const results = await query(`
+            SELECT s.*,
+                   COALESCE((
+                       SELECT SUM(c.so_luong)
+                       FROM chi_tiet_don_hang c
+                       JOIN don_hang d ON c.don_hang_id = d.id
+                       WHERE (c.product_id = s.id OR (c.product_id IS NULL AND c.ten_san_pham = s.ten_san_pham))
+                         AND d.trang_thai != 'Đã hủy'
+                   ), 0) AS da_ban
+            FROM san_pham s
+            ORDER BY s.id DESC
+        `);
         ok(res, '', results);
     } catch (err) {
         console.error('❌ Lỗi lấy sản phẩm:', err);
@@ -21,7 +32,19 @@ router.get('/san-pham', async (req, res) => {
 // Chi tiết một sản phẩm (công khai)
 router.get('/san-pham/:id', async (req, res) => {
     try {
-        const results = await query('SELECT * FROM san_pham WHERE id = ? LIMIT 1', [req.params.id]);
+        const results = await query(`
+            SELECT s.*,
+                   COALESCE((
+                       SELECT SUM(c.so_luong)
+                       FROM chi_tiet_don_hang c
+                       JOIN don_hang d ON c.don_hang_id = d.id
+                       WHERE (c.product_id = s.id OR (c.product_id IS NULL AND c.ten_san_pham = s.ten_san_pham))
+                         AND d.trang_thai != 'Đã hủy'
+                   ), 0) AS da_ban
+            FROM san_pham s
+            WHERE s.id = ?
+            LIMIT 1
+        `, [req.params.id]);
         if (results.length === 0) return fail(res, 404, 'Không tìm thấy sản phẩm!');
         ok(res, '', results[0]);
     } catch (err) {

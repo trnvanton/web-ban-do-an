@@ -97,6 +97,13 @@ export default function ProductCard({ p, compact = false }) {
             <div className="pt-2 border-top">
                 <div className="d-flex justify-content-between align-items-center mb-2">
                     <span className="text-success fw-bold fs-5 mb-0">{fmtVND(p.gia)}</span>
+                    <span className="small" style={{ fontSize: '12px' }}>
+                        {Number(p.da_ban) > 0 ? (
+                            <span className="text-muted"><i className="fas fa-fire text-danger me-1"></i>Đã bán {Number(p.da_ban).toLocaleString('vi-VN')}</span>
+                        ) : (
+                            <span className="badge bg-light text-secondary border">Mới nhập</span>
+                        )}
+                    </span>
                 </div>
 
                 {isOutOfStock ? (

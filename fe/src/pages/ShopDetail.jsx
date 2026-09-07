@@ -505,7 +505,10 @@ export default function ShopDetail() {
                                     <span className="text-muted">•</span>
                                     <span className="text-muted">{reviewData.total_reviews} nhận xét</span>
                                     <span className="text-muted">•</span>
-                                    <span className="meta-sold"><i className="fas fa-fire text-danger me-1"></i>Đã bán 120+ lượt</span>
+                                    <span className="meta-sold">
+                                        <i className="fas fa-fire text-danger me-1"></i>
+                                        Đã bán {product.da_ban !== undefined && product.da_ban !== null ? Number(product.da_ban).toLocaleString('vi-VN') : 0} {profile.unit || 'sản phẩm'}
+                                    </span>
                                 </div>
 
                                 {/* Price Box */}

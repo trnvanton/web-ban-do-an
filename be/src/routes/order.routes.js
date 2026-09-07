@@ -178,8 +178,25 @@ router.get('/user/don-hang', requireAuth, async (req, res) => {
             params.push(`%${keyword}%`, `%${keyword}%`);
         }
         sql += ' ORDER BY id DESC';
-        const results = await query(sql, params);
-        ok(res, '', results);
+        const orders = await query(sql, params);
+
+        if (orders && orders.length > 0) {
+            const orderIds = orders.map(o => o.id);
+            const placeholders = orderIds.map(() => '?').join(',');
+            const allItems = await query(`SELECT * FROM chi_tiet_don_hang WHERE don_hang_id IN (${placeholders})`, orderIds);
+            
+            const itemMap = {};
+            (allItems || []).forEach(item => {
+                if (!itemMap[item.don_hang_id]) itemMap[item.don_hang_id] = [];
+                itemMap[item.don_hang_id].push(item);
+            });
+
+            orders.forEach(o => {
+                o.items = itemMap[o.id] || [];
+            });
+        }
+
+        ok(res, '', orders);
     } catch (err) {
         console.error('❌ Lỗi lấy đơn hàng user:', err);
         fail(res, 500, 'Lỗi máy chủ!');

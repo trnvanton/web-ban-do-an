@@ -69,7 +69,9 @@ export default function Shop() {
         });
 
         // Sắp xếp
-        if (sortBy === 'price-asc') {
+        if (sortBy === 'bestseller') {
+            filtered.sort((a, b) => (Number(b.da_ban) || 0) - (Number(a.da_ban) || 0));
+        } else if (sortBy === 'price-asc') {
             filtered.sort((a, b) => Number(a.gia) - Number(b.gia));
         } else if (sortBy === 'price-desc') {
             filtered.sort((a, b) => Number(b.gia) - Number(a.gia));
@@ -117,8 +119,9 @@ export default function Shop() {
                         <div className="col-md-6 col-lg-4">
                             <div className="d-flex align-items-center justify-content-md-end gap-2">
                                 <label className="fw-bold mb-0 text-nowrap"><i className="fa fa-sort me-1 text-primary"></i>Sắp xếp:</label>
-                                <select className="form-select w-auto" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                                <select className="form-select w-auto shadow-sm border-0" value={sortBy} onChange={e => setSortBy(e.target.value)}>
                                     <option value="newest">Mới nhất</option>
+                                    <option value="bestseller">🔥 Bán chạy nhất</option>
                                     <option value="price-asc">Giá: Thấp đến Cao</option>
                                     <option value="price-desc">Giá: Cao đến Thấp</option>
                                 </select>
