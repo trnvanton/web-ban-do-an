@@ -198,45 +198,45 @@ export default function Home() {
                 <div className="container py-4">
                     <div className="row g-4 align-items-stretch">
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
-                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
-                                    <i className="fas fa-motorcycle fa-2x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-white p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm">
+                                <div className="featurs-icon rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center shadow-sm" style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #ff9f43 0%, #ff5252 100%)' }}>
+                                    <i className="fas fa-shipping-fast fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5 className="fw-bold mb-2 text-dark">Giao Hàng Siêu Tốc</h5>
-                                    <p className="mb-0 text-muted small">Món ăn giữ trọn vị nóng sốt, giao nhanh tận cửa</p>
+                                    <h5 className="fw-bold mb-2 text-dark fs-6">Giao Hàng Siêu Tốc</h5>
+                                    <p className="mb-0 text-muted small">Món ăn giữ trọn vị nóng sốt, giao nhanh tận nơi 30 phút</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
-                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
+                            <div className="featurs-item text-center rounded-4 bg-white p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm">
+                                <div className="featurs-icon rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center shadow-sm" style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #10ac84 0%, #2ed573 100%)' }}>
                                     <i className="fas fa-qrcode fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5 className="fw-bold mb-2 text-dark">Thanh Toán VietQR &amp; COD</h5>
-                                    <p className="mb-0 text-muted small">Quét mã QR ngân hàng tiện lợi hoặc trả tiền mặt khi nhận</p>
+                                    <h5 className="fw-bold mb-2 text-dark fs-6">Thanh Toán An Toàn</h5>
+                                    <p className="mb-0 text-muted small">Quét mã VietQR ngân hàng tiện lợi hoặc trả tiền mặt khi nhận</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
-                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
-                                    <i className="fas fa-magic fa-2x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-white p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm">
+                                <div className="featurs-icon rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center shadow-sm" style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #3742fa 0%, #70a1ff 100%)' }}>
+                                    <i className="fas fa-utensils fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5 className="fw-bold mb-2 text-dark">Gợi Ý Món Ăn Thông Minh</h5>
+                                    <h5 className="fw-bold mb-2 text-dark fs-6">Gợi Ý Món Ăn Thông Minh</h5>
                                     <p className="mb-0 text-muted small">Lên thực đơn và công thức chuẩn theo nguyên liệu tủ lạnh</p>
                                 </div>
                             </div>
                         </div>
                         <div className="col-md-6 col-lg-3">
-                            <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
-                                <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
-                                    <i className="fas fa-shield-alt fa-2x text-white"></i>
+                            <div className="featurs-item text-center rounded-4 bg-white p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm">
+                                <div className="featurs-icon rounded-circle mb-3 mx-auto d-flex align-items-center justify-content-center shadow-sm" style={{ width: 72, height: 72, background: 'linear-gradient(135deg, #81c408 0%, #20bf6b 100%)' }}>
+                                    <i className="fas fa-check-circle fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
-                                    <h5 className="fw-bold mb-2 text-dark">100% Vệ Sinh An Toàn</h5>
+                                    <h5 className="fw-bold mb-2 text-dark fs-6">100% Vệ Sinh An Toàn</h5>
                                     <p className="mb-0 text-muted small">Nguyên liệu VietGAP tươi sạch, chứng nhận an toàn thực phẩm</p>
                                 </div>
                             </div>
