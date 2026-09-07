@@ -48,10 +48,24 @@ export default function Shop() {
         return () => { mounted = false; };
     }, []);
 
-    const categories = useMemo(
-        () => ['Tất cả', ...new Set(products.map(p => p.danh_muc).filter(Boolean))],
-        [products]
-    );
+    const PREFERRED_CAT_ORDER = [
+        'Tất cả',
+        'Món Chế Biến Sẵn',
+        'Set Nấu Ăn (Meal-kit)',
+        'Thịt & Hải Sản Tươi',
+        'Rau Củ & Nông Sản Tươi',
+        'Gia Vị & Nông Sản Bếp',
+        'Đồ Uống & Tráng Miệng'
+    ];
+
+    const categories = useMemo(() => {
+        const availableCats = [...new Set(products.map(p => p.danh_muc).filter(Boolean))];
+        return [
+            'Tất cả',
+            ...PREFERRED_CAT_ORDER.filter(c => c !== 'Tất cả' && availableCats.includes(c)),
+            ...availableCats.filter(c => !PREFERRED_CAT_ORDER.includes(c))
+        ];
+    }, [products]);
 
     const list = useMemo(() => {
         const q = keyword.toLowerCase();

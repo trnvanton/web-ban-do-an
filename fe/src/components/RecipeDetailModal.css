@@ -187,70 +187,270 @@
 }
 
 /* Interactive Ingredient Checklist */
+/* Toast thông báo nhanh */
+.recipe-modal-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f172a;
+    color: #ffffff;
+    padding: 10px 18px 10px 22px;
+    border-radius: 9999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: toastPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.btn-toast-view-cart {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+.btn-toast-view-cart:hover {
+    background: #059669;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Nút Xem Giỏ Hàng trong Modal */
+.btn-view-cart-main {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1.5px solid #a7f3d0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-view-cart-main:hover {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-view-cart-main .cart-badge-num {
+    background: #047857;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+}
+
+.btn-view-cart-main:hover .cart-badge-num {
+    background: #ffffff;
+    color: #047857;
+}
+
+@keyframes toastPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+/* Interactive Ingredient Checklist */
 .ingredient-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 14px;
 }
 
 .ingredient-item {
     display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 125px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1.5px solid #e2e8f0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     user-select: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    position: relative;
 }
 
 .ingredient-item:hover {
-    background: #f1f5f9;
+    background: #f8fafc;
     border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
 .ingredient-item.checked {
     background: #f0fdf4;
-    border-color: #bbf7d0;
+    border-color: #86efac;
 }
 
-.ingredient-item.checked .ingredient-name {
-    text-decoration: line-through;
-    color: #94a3b8;
+.ingredient-item.matched-initial {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.ingredient-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+}
+
+.ingredient-checkbox-wrap {
+    padding-top: 2px;
+    flex-shrink: 0;
 }
 
 .ingredient-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 6px;
-    margin-right: 12px;
     accent-color: #10b981;
     cursor: pointer;
 }
 
-.ingredient-info {
+.ingredient-header-content {
     flex-grow: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .ingredient-name {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #334155;
-    margin-bottom: 1px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.35;
+}
+
+.ingredient-item.checked .ingredient-name {
+    color: #15803d;
+}
+
+.badge-ing-matched {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #15803d;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.ingredient-body-row {
+    padding-left: 30px;
+    margin-top: 4px;
+    margin-bottom: 8px;
 }
 
 .ingredient-amount {
-    font-size: 0.8rem;
-    color: #10b981;
-    font-weight: 600;
+    font-size: 0.85rem;
+    color: #059669;
+    font-weight: 700;
 }
 
 .ingredient-note {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: #64748b;
     font-style: italic;
-    margin-left: 6px;
+    margin-left: 4px;
+}
+
+/* Dòng cuối cùng: Nút thêm giỏ hàng / Trạng thái sẵn sàng */
+.ingredient-action-row {
+    width: 100%;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.ingredient-item.checked .ingredient-action-row {
+    border-top-color: #bbf7d0;
+}
+
+.badge-ing-ready {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #166534;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Nút thêm nguyên liệu vào giỏ hàng ở dòng cuối cùng */
+.btn-add-ing-cart {
+    width: 100%;
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1.5px solid #86efac;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-add-ing-cart:hover {
+    background: #16a34a;
+    color: #ffffff;
+    border-color: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.btn-add-ing-cart:active {
+    transform: scale(0.98);
+}
+
+.btn-add-ing-cart.added {
+    background: #15803d;
+    color: #ffffff;
+    border-color: #15803d;
 }
 
 /* Step Timeline */

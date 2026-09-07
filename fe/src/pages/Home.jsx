@@ -45,8 +45,10 @@ export default function Home() {
         'Tất cả',
         'Món Chế Biến Sẵn',
         'Set Nấu Ăn (Meal-kit)',
-        'Đồ Uống & Tráng Miệng',
-        'Nông Sản & Nguyên Liệu'
+        'Thịt & Hải Sản Tươi',
+        'Rau Củ & Nông Sản Tươi',
+        'Gia Vị & Nông Sản Bếp',
+        'Đồ Uống & Tráng Miệng'
     ];
 
     const availableCats = [...new Set(products.map(p => p.danh_muc).filter(Boolean))];
@@ -728,6 +730,7 @@ export default function Home() {
             {selectedDish && (
                 <RecipeDetailModal
                     dish={selectedDish}
+                    isOpen={Boolean(selectedDish)}
                     onClose={() => setSelectedDish(null)}
                 />
             )}

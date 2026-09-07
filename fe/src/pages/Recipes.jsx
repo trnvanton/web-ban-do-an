@@ -228,6 +228,11 @@ export default function Recipes() {
     const [selectedDish, setSelectedDish] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Tính toán danh sách nguyên liệu người dùng đang chọn (kết hợp cả tab tra cứu và tab lập thực đơn)
+    const allSelectedIds = [...new Set([...searchIngredients, ...selectedIngredients])];
+    const currentUserIngredients = (Object.values(ingredientGroups || {}).flat() || [])
+        .filter(ing => allSelectedIds.includes(ing.id));
+
     const handleOpenDetail = (dish) => {
         if (!dish) return;
         setSelectedDish(dish);
@@ -788,6 +793,7 @@ export default function Recipes() {
             <RecipeDetailModal
                 dish={selectedDish}
                 isOpen={isModalOpen}
+                userIngredients={currentUserIngredients}
                 onClose={() => setIsModalOpen(false)}
             />
         </div>
