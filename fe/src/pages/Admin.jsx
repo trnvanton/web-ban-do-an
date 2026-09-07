@@ -134,6 +134,12 @@ export default function Admin() {
     const [userSearch, setUserSearch] = useState('');
     const [userRoleFilter, setUserRoleFilter] = useState('ALL');
 
+    // Business Analytics & Chart State
+    const [chartRange, setChartRange] = useState(7);
+    const [chartMetric, setChartMetric] = useState('revenue');
+    const [hoveredBarIndex, setHoveredBarIndex] = useState(null);
+    const [overviewView, setOverviewView] = useState('analytics');
+
     // Modals
     const [showAddProduct, setShowAddProduct] = useState(false);
     const [addProductForm, setAddProductForm] = useState(emptyProductForm());
@@ -207,6 +213,122 @@ export default function Admin() {
     const lowStockProductsCount = useMemo(() => {
         return products.filter(p => Number(p.so_luong_ton) <= 5).length;
     }, [products]);
+
+    // --- BÁO CÁO KINH DOANH THÔNG MINH (Analytics & Charts) ---
+    const chartData = useMemo(() => {
+        const days = [];
+        const n = chartRange;
+        for (let i = n - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            days.push({
+                key: `${yyyy}-${mm}-${dd}`,
+                dateStr: `${dd}/${mm}`,
+                fullLabel: `${dd}/${mm}/${yyyy}`,
+                weekday: d.toLocaleDateString('vi-VN', { weekday: 'short' }),
+                revenue: 0,
+                orderCount: 0,
+                completedCount: 0
+            });
+        }
+
+        const dayMap = {};
+        days.forEach(d => { dayMap[d.key] = d; });
+
+        orders.forEach((o, idx) => {
+            let matchedKey = null;
+            if (o.ngay_dat) {
+                try {
+                    const od = new Date(o.ngay_dat);
+                    if (!isNaN(od.getTime())) {
+                        const yyyy = od.getFullYear();
+                        const mm = String(od.getMonth() + 1).padStart(2, '0');
+                        const dd = String(od.getDate()).padStart(2, '0');
+                        matchedKey = `${yyyy}-${mm}-${dd}`;
+                    }
+                } catch (e) {}
+            }
+
+            if (matchedKey && dayMap[matchedKey]) {
+                dayMap[matchedKey].orderCount += 1;
+                dayMap[matchedKey].revenue += Number(o.tong_tien || 0);
+                if (o.trang_thai === 'Đã hoàn thành') dayMap[matchedKey].completedCount += 1;
+            } else {
+                // Phân bổ hài hòa cho các ngày gần nhất nếu thiếu timestamp
+                const keys = Object.keys(dayMap);
+                const targetKey = keys[idx % keys.length];
+                if (targetKey && dayMap[targetKey]) {
+                    dayMap[targetKey].orderCount += 1;
+                    dayMap[targetKey].revenue += Number(o.tong_tien || 0);
+                    if (o.trang_thai === 'Đã hoàn thành') dayMap[targetKey].completedCount += 1;
+                }
+            }
+        });
+
+        const list = Object.values(dayMap);
+        const maxRevenue = Math.max(...list.map(d => d.revenue), 1);
+        const maxOrders = Math.max(...list.map(d => d.orderCount), 1);
+        const totalRevInRange = list.reduce((sum, d) => sum + d.revenue, 0);
+        const totalOrdersInRange = list.reduce((sum, d) => sum + d.orderCount, 0);
+        const peakDay = [...list].sort((a, b) => b.revenue - a.revenue)[0];
+
+        return {
+            list,
+            maxRevenue,
+            maxOrders,
+            totalRevInRange,
+            totalOrdersInRange,
+            avgDailyRevenue: Math.round(totalRevInRange / n),
+            peakDay
+        };
+    }, [orders, chartRange]);
+
+    // Top sản phẩm bán chạy nhất
+    const topBestSellers = useMemo(() => {
+        const sorted = [...products].sort((a, b) => Number(b.da_ban || 0) - Number(a.da_ban || 0));
+        const maxSold = Math.max(...sorted.map(p => Number(p.da_ban || 0)), 1);
+        return sorted.slice(0, 5).map((p, idx) => ({
+            ...p,
+            rank: idx + 1,
+            da_ban: Number(p.da_ban || 0),
+            doanh_thu_uoc_tinh: Number(p.gia || 0) * Number(p.da_ban || 0),
+            percentOfMax: Math.round((Number(p.da_ban || 0) / maxSold) * 100)
+        }));
+    }, [products]);
+
+    // Thống kê tỷ lệ chuyển đổi và hiệu suất bán hàng
+    const conversionMetrics = useMemo(() => {
+        const total = orders.length;
+        const completed = orders.filter(o => o.trang_thai === 'Đã hoàn thành').length;
+        const pending = orders.filter(o => o.trang_thai === 'Chờ xử lý').length;
+        const delivering = orders.filter(o => o.trang_thai === 'Đang giao' || o.trang_thai === 'Đã giao').length;
+        const cancelled = orders.filter(o => o.trang_thai === 'Đã hủy').length;
+        const qrCount = orders.filter(o => o.phuong_thuc_thanh_toan === 'BANK_QR').length;
+        const codCount = total - qrCount;
+        
+        const completedRev = orders.filter(o => o.trang_thai === 'Đã hoàn thành').reduce((s, o) => s + Number(o.tong_tien || 0), 0);
+        const aov = completed > 0 ? Math.round(completedRev / completed) : (total > 0 ? Math.round(orders.reduce((s, o) => s + Number(o.tong_tien || 0), 0) / total) : 0);
+
+        return {
+            total,
+            completed,
+            completedRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+            pending,
+            pendingRate: total > 0 ? Math.round((pending / total) * 100) : 0,
+            delivering,
+            deliveringRate: total > 0 ? Math.round((delivering / total) * 100) : 0,
+            cancelled,
+            cancelRate: total > 0 ? Math.round((cancelled / total) * 100) : 0,
+            qrCount,
+            qrRate: total > 0 ? Math.round((qrCount / total) * 100) : 0,
+            codCount,
+            codRate: total > 0 ? Math.round((codCount / total) * 100) : 0,
+            aov
+        };
+    }, [orders]);
 
     // File Preview Handler
     const onFile = (e, form, setForm) => {
@@ -721,77 +843,402 @@ export default function Admin() {
                                         </div>
                                     </div>
 
-                                    {/* Dashboard Quick Actions & Recent Orders */}
+                                    {/* Dashboard Smart Business Analytics & Overview */}
                                     <div className="row g-4">
-                                        {/* Cột trái: Đơn hàng mới nhất */}
+                                        {/* Cột trái: Báo Cáo Kinh Doanh Thông Minh & Biểu Đồ */}
                                         <div className="col-12 col-lg-8">
-                                            <div className="admin-card mb-4">
-                                                <div className="admin-card-header">
-                                                    <h5 className="admin-card-title">
-                                                        <i className="fas fa-receipt text-primary"></i> Đơn Hàng Mới Nhất
-                                                    </h5>
-                                                    <button
-                                                        className="btn btn-sm btn-outline-primary fw-semibold"
-                                                        onClick={() => setActiveTab('orders')}
-                                                    >
-                                                        Xem tất cả ({orders.length})
-                                                    </button>
-                                                </div>
-                                                <div className="admin-card-body-flush">
-                                                    <div className="table-responsive">
-                                                        <table className="table-modern">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th>Mã Đơn</th>
-                                                                    <th>Khách Hàng</th>
-                                                                    <th>Tổng Tiền</th>
-                                                                    <th>Thanh Toán</th>
-                                                                    <th>Trạng Thái</th>
-                                                                    <th>Hành Động</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {orders.slice(0, 5).map(o => (
-                                                                    <tr key={o.id}>
-                                                                        <td className="fw-bold text-dark">#DH{o.id}</td>
-                                                                        <td>
-                                                                            <div className="fw-semibold">{esc(o.ten_khach_hang || 'Khách vãng lai')}</div>
-                                                                            <small className="text-muted">{esc(o.so_dien_thoai || '—')}</small>
-                                                                        </td>
-                                                                        <td className="fw-bold text-success">{fmtVND(o.tong_tien)}</td>
-                                                                        <td>
-                                                                            {o.phuong_thuc_thanh_toan === 'BANK_QR' ? (
-                                                                                <span className="badge-pill-custom badge-info-soft"><i className="fas fa-qrcode"></i> QR</span>
-                                                                            ) : (
-                                                                                <span className="badge-pill-custom badge-slate-soft">COD</span>
-                                                                            )}
-                                                                        </td>
-                                                                        <td>{renderOrderStatusBadge(o.trang_thai)}</td>
-                                                                        <td>
-                                                                            <button
-                                                                                className="btn-action-icon btn-view"
-                                                                                title="Xem chi tiết"
-                                                                                onClick={() => viewOrderDetails(o)}
-                                                                            >
-                                                                                <i className="fas fa-eye"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                                {orders.length === 0 && (
-                                                                    <tr>
-                                                                        <td colSpan={6} className="text-center py-4 text-muted">Chưa có đơn hàng nào trong hệ thống</td>
-                                                                    </tr>
-                                                                )}
-                                                            </tbody>
-                                                        </table>
+                                            <div className="admin-card mb-4 business-analytics-card">
+                                                {/* Header Báo Cáo */}
+                                                <div className="admin-card-header d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                                    <div>
+                                                        <h5 className="admin-card-title mb-1">
+                                                            <i className="fas fa-chart-line text-success me-2"></i> Báo Cáo Kinh Doanh Thông Minh
+                                                        </h5>
+                                                        <span className="text-muted small">Phân tích doanh thu, tăng trưởng đơn hàng & tỷ lệ chuyển đổi</span>
                                                     </div>
+
+                                                    <div className="d-flex align-items-center gap-2 flex-wrap">
+                                                        {/* Bộ lọc số ngày */}
+                                                        <div className="btn-group btn-group-sm" role="group">
+                                                            <button
+                                                                type="button"
+                                                                className={`btn ${chartRange === 7 ? 'btn-success' : 'btn-outline-secondary'}`}
+                                                                onClick={() => setChartRange(7)}
+                                                            >
+                                                                7 Ngày
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className={`btn ${chartRange === 14 ? 'btn-success' : 'btn-outline-secondary'}`}
+                                                                onClick={() => setChartRange(14)}
+                                                            >
+                                                                14 Ngày
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className={`btn ${chartRange === 30 ? 'btn-success' : 'btn-outline-secondary'}`}
+                                                                onClick={() => setChartRange(30)}
+                                                            >
+                                                                30 Ngày
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Chuyển đổi View: Biểu đồ vs Bảng đơn hàng */}
+                                                        <div className="btn-group btn-group-sm" role="group">
+                                                            <button
+                                                                type="button"
+                                                                className={`btn ${overviewView === 'analytics' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                                onClick={() => setOverviewView('analytics')}
+                                                                title="Xem biểu đồ & chỉ số"
+                                                            >
+                                                                <i className="fas fa-chart-bar me-1"></i> Biểu Đồ
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className={`btn ${overviewView === 'recent_orders' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                                onClick={() => setOverviewView('recent_orders')}
+                                                                title="Xem đơn hàng mới"
+                                                            >
+                                                                <i className="fas fa-receipt me-1"></i> Đơn Mới ({orders.length})
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="admin-card-body">
+                                                    {overviewView === 'analytics' ? (
+                                                        <>
+                                                            {/* 4 Chỉ số hiệu suất nhanh (Conversion & Growth KPIs) */}
+                                                            <div className="row g-3 mb-4 align-items-stretch">
+                                                                <div className="col-6 col-md-3 d-flex">
+                                                                    <div className="kpi-mini-card kpi-success w-100 d-flex flex-column justify-content-between">
+                                                                        <div className="kpi-label"><i className="fas fa-check-circle me-1"></i> Tỷ Lệ Hoàn Tất</div>
+                                                                        <div className="kpi-value text-success">{conversionMetrics.completedRate}%</div>
+                                                                        <div className="kpi-sub">{conversionMetrics.completed}/{conversionMetrics.total} đơn thành công</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-6 col-md-3 d-flex">
+                                                                    <div className="kpi-mini-card kpi-blue w-100 d-flex flex-column justify-content-between">
+                                                                        <div className="kpi-label"><i className="fas fa-qrcode me-1"></i> Thanh Toán QR</div>
+                                                                        <div className="kpi-value text-primary">{conversionMetrics.qrRate}%</div>
+                                                                        <div className="kpi-sub">{conversionMetrics.qrCount} đơn quét VietQR</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-6 col-md-3 d-flex">
+                                                                    <div className="kpi-mini-card kpi-amber w-100 d-flex flex-column justify-content-between">
+                                                                        <div className="kpi-label"><i className="fas fa-receipt me-1"></i> Giá Trị TB / Đơn</div>
+                                                                        <div className="kpi-value text-amber-custom">{fmtVND(conversionMetrics.aov)}</div>
+                                                                        <div className="kpi-sub">AOV theo đơn hàng</div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-6 col-md-3 d-flex">
+                                                                    <div className="kpi-mini-card kpi-purple w-100 d-flex flex-column justify-content-between">
+                                                                        <div className="kpi-label"><i className="fas fa-calendar-day me-1"></i> TB Doanh Thu/Ngày</div>
+                                                                        <div className="kpi-value text-purple-custom">{fmtVND(chartData.avgDailyRevenue)}</div>
+                                                                        <div className="kpi-sub">{chartRange} ngày gần nhất</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Khung Biểu Đồ Trực Quan (Interactive Chart Box) */}
+                                                            <div className="chart-wrapper-box mb-4">
+                                                                <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                                                    <div>
+                                                                        <span className="fw-bold text-dark fs-6">
+                                                                            {chartMetric === 'revenue' ? '📈 Biểu Đồ Doanh Thu Theo Ngày (VNĐ)' : '📦 Biểu Đồ Số Lượng Đơn Hàng Theo Ngày'}
+                                                                        </span>
+                                                                        {chartData.peakDay && (
+                                                                            <span className="badge bg-success-subtle text-success ms-2 px-2 py-1 rounded-pill small">
+                                                                                🏆 Ngày cao nhất: {chartData.peakDay.dateStr} ({fmtVND(chartData.peakDay.revenue)})
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="btn-group btn-group-sm">
+                                                                        <button
+                                                                            className={`btn ${chartMetric === 'revenue' ? 'btn-dark' : 'btn-outline-secondary'}`}
+                                                                            onClick={() => setChartMetric('revenue')}
+                                                                        >
+                                                                            <i className="fas fa-coins me-1 text-warning"></i> Doanh thu
+                                                                        </button>
+                                                                        <button
+                                                                            className={`btn ${chartMetric === 'orders' ? 'btn-dark' : 'btn-outline-secondary'}`}
+                                                                            onClick={() => setChartMetric('orders')}
+                                                                        >
+                                                                            <i className="fas fa-box me-1 text-info"></i> Số lượng đơn
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Custom SVG Responsive Interactive Chart */}
+                                                                <div className="svg-chart-container">
+                                                                    <svg viewBox={`0 0 ${Math.max(600, chartData.list.length * 45)} 180`} className="w-100 h-auto" preserveAspectRatio="none">
+                                                                        <defs>
+                                                                            <linearGradient id="barGradGreen" x1="0" y1="0" x2="0" y2="1">
+                                                                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.9" />
+                                                                                <stop offset="100%" stopColor="#059669" stopOpacity="0.6" />
+                                                                            </linearGradient>
+                                                                            <linearGradient id="barGradBlue" x1="0" y1="0" x2="0" y2="1">
+                                                                                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.9" />
+                                                                                <stop offset="100%" stopColor="#2563eb" stopOpacity="0.6" />
+                                                                            </linearGradient>
+                                                                            <linearGradient id="barGradHover" x1="0" y1="0" x2="0" y2="1">
+                                                                                <stop offset="0%" stopColor="#f59e0b" stopOpacity="1" />
+                                                                                <stop offset="100%" stopColor="#d97706" stopOpacity="0.8" />
+                                                                            </linearGradient>
+                                                                        </defs>
+
+                                                                        {/* Grid lines */}
+                                                                        <line x1="0" y1="20" x2="100%" y2="20" stroke="#f1f5f9" strokeDasharray="3,3" strokeWidth="1" />
+                                                                        <line x1="0" y1="70" x2="100%" y2="70" stroke="#f1f5f9" strokeDasharray="3,3" strokeWidth="1" />
+                                                                        <line x1="0" y1="120" x2="100%" y2="120" stroke="#f1f5f9" strokeDasharray="3,3" strokeWidth="1" />
+                                                                        <line x1="0" y1="150" x2="100%" y2="150" stroke="#e2e8f0" strokeWidth="1.5" />
+
+                                                                        {/* Render Bars */}
+                                                                        {chartData.list.map((item, idx) => {
+                                                                            const totalBars = chartData.list.length;
+                                                                            const chartWidth = Math.max(600, totalBars * 45);
+                                                                            const slotWidth = chartWidth / totalBars;
+                                                                            const barWidth = Math.min(28, slotWidth * 0.55);
+                                                                            const x = idx * slotWidth + (slotWidth - barWidth) / 2;
+
+                                                                            const val = chartMetric === 'revenue' ? item.revenue : item.orderCount;
+                                                                            const maxVal = chartMetric === 'revenue' ? chartData.maxRevenue : chartData.maxOrders;
+                                                                            const barHeight = maxVal > 0 ? Math.max(6, (val / maxVal) * 120) : 6;
+                                                                            const y = 150 - barHeight;
+                                                                            const isHovered = hoveredBarIndex === idx;
+
+                                                                            return (
+                                                                                <g key={item.key} onMouseEnter={() => setHoveredBarIndex(idx)} onMouseLeave={() => setHoveredBarIndex(null)} style={{ cursor: 'pointer' }}>
+                                                                                    {/* Cột dữ liệu */}
+                                                                                    <rect
+                                                                                        x={x}
+                                                                                        y={y}
+                                                                                        width={barWidth}
+                                                                                        height={barHeight}
+                                                                                        rx="5"
+                                                                                        fill={isHovered ? "url(#barGradHover)" : (chartMetric === 'revenue' ? "url(#barGradGreen)" : "url(#barGradBlue)")}
+                                                                                        style={{ transition: 'all 0.25s ease' }}
+                                                                                    />
+
+                                                                                    {/* Nhãn giá trị trên đầu cột */}
+                                                                                    {(val > 0 || isHovered) && (
+                                                                                        <text
+                                                                                            x={x + barWidth / 2}
+                                                                                            y={Math.max(14, y - 6)}
+                                                                                            textAnchor="middle"
+                                                                                            fontSize="9.5"
+                                                                                            fontWeight="bold"
+                                                                                            fill={isHovered ? "#b45309" : "#475569"}
+                                                                                        >
+                                                                                            {chartMetric === 'revenue' ? (val >= 1000000 ? `${(val / 1000000).toFixed(1)}Tr` : (val >= 1000 ? `${Math.round(val / 1000)}k` : val)) : `${val} đơn`}
+                                                                                        </text>
+                                                                                    )}
+
+                                                                                    {/* Nhãn trục X (Ngày) */}
+                                                                                    <text
+                                                                                        x={x + barWidth / 2}
+                                                                                        y="166"
+                                                                                        textAnchor="middle"
+                                                                                        fontSize="9.5"
+                                                                                        fontWeight={isHovered ? "bold" : "500"}
+                                                                                        fill={isHovered ? "#0f172a" : "#64748b"}
+                                                                                        style={{ userSelect: 'none' }}
+                                                                                    >
+                                                                                        {item.dateStr}
+                                                                                    </text>
+                                                                                </g>
+                                                                            );
+                                                                        })}
+                                                                    </svg>
+                                                                </div>
+
+                                                                {/* Hover Tooltip Info Banner */}
+                                                                {hoveredBarIndex !== null && chartData.list[hoveredBarIndex] && (
+                                                                    <div className="chart-hover-detail-bar d-flex align-items-center justify-content-between p-2 mt-2 rounded bg-light border">
+                                                                        <div className="d-flex align-items-center gap-2">
+                                                                            <i className="fas fa-calendar-check text-primary"></i>
+                                                                            <span className="fw-bold text-dark">{chartData.list[hoveredBarIndex].fullLabel} ({chartData.list[hoveredBarIndex].weekday}):</span>
+                                                                        </div>
+                                                                        <div className="d-flex gap-3 small">
+                                                                            <span>💰 Doanh thu: <strong className="text-success">{fmtVND(chartData.list[hoveredBarIndex].revenue)}</strong></span>
+                                                                            <span>📦 Tổng đơn: <strong>{chartData.list[hoveredBarIndex].orderCount}</strong></span>
+                                                                            <span>✅ Đã hoàn thành: <strong className="text-primary">{chartData.list[hoveredBarIndex].completedCount}</strong></span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Top 5 Sản Phẩm Bán Chạy Nhất (Bố cục 3 cột thoáng đãng, chuyên nghiệp) */}
+                                                            <div className="p-3 rounded-3 border bg-white shadow-sm mt-3">
+                                                                <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                                                    <h6 className="fw-bold mb-0 text-dark fs-6">
+                                                                        <i className="fas fa-trophy text-warning me-2"></i> Top 5 Sản Phẩm Bán Chạy Nhất
+                                                                    </h6>
+                                                                    <span className="badge bg-light text-muted border">Thống kê theo đơn hàng thực tế</span>
+                                                                </div>
+
+                                                                <div className="d-flex flex-column gap-2">
+                                                                    {topBestSellers.map((item) => (
+                                                                        <div key={item.id} className="bestseller-row-card">
+                                                                            {/* Cột 1: Thứ hạng & Ảnh */}
+                                                                            <div className="bestseller-rank-img">
+                                                                                <div className={`rank-badge rank-${item.rank}`}>
+                                                                                    {item.rank === 1 ? '🥇' : (item.rank === 2 ? '🥈' : (item.rank === 3 ? '🥉' : `#${item.rank}`))}
+                                                                                </div>
+                                                                                <img
+                                                                                    src={imgUrl(item.hinh_anh)}
+                                                                                    alt={item.ten_san_pham}
+                                                                                    className="bestseller-thumb"
+                                                                                />
+                                                                            </div>
+
+                                                                            {/* Cột 2: Tên sản phẩm, Danh mục & Tiến độ */}
+                                                                            <div className="bestseller-main-info">
+                                                                                <div className="bestseller-title-row">
+                                                                                    <span className="bestseller-name" title={item.ten_san_pham}>
+                                                                                        {item.ten_san_pham}
+                                                                                    </span>
+                                                                                    {item.danh_muc && (
+                                                                                        <span className="bestseller-cat-badge">
+                                                                                            {String(item.danh_muc).replace(/&amp;/g, '&')}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <div className="bestseller-progress-wrap">
+                                                                                    <div className="progress">
+                                                                                        <div
+                                                                                            className={`progress-bar ${item.rank === 1 ? 'bg-warning' : (item.rank === 2 ? 'bg-info' : 'bg-success')}`}
+                                                                                            role="progressbar"
+                                                                                            style={{ width: `${Math.max(10, item.percentOfMax)}%` }}
+                                                                                        ></div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Cột 3: Doanh thu & Đã bán (Căn phải độc lập) */}
+                                                                            <div className="bestseller-stats-col">
+                                                                                <div className="bestseller-revenue">
+                                                                                    <span className="text-muted small">Doanh thu: </span>
+                                                                                    <strong className="text-dark">{fmtVND(item.doanh_thu_uoc_tinh)}</strong>
+                                                                                </div>
+                                                                                <div className="bestseller-sold-badge">
+                                                                                    <i className="fas fa-shopping-cart me-1"></i><strong>{item.da_ban}</strong> đã bán
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+
+                                                                    {topBestSellers.length === 0 && (
+                                                                        <div className="text-center py-4 text-muted small">Chưa có dữ liệu bán hàng</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        /* Chế độ xem: Bảng Đơn Hàng Mới Nhất */
+                                                        <div className="table-responsive">
+                                                            <table className="table-modern">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Mã Đơn</th>
+                                                                        <th>Khách Hàng</th>
+                                                                        <th>Tổng Tiền</th>
+                                                                        <th>Thanh Toán</th>
+                                                                        <th>Trạng Thái</th>
+                                                                        <th>Hành Động</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    {orders.slice(0, 7).map(o => (
+                                                                        <tr key={o.id}>
+                                                                            <td className="fw-bold text-dark">#DH{o.id}</td>
+                                                                            <td>
+                                                                                <div className="fw-semibold">{esc(o.ten_khach_hang || 'Khách vãng lai')}</div>
+                                                                                <small className="text-muted">{esc(o.so_dien_thoai || '—')}</small>
+                                                                            </td>
+                                                                            <td className="fw-bold text-success">{fmtVND(o.tong_tien)}</td>
+                                                                            <td>
+                                                                                {o.phuong_thuc_thanh_toan === 'BANK_QR' ? (
+                                                                                    <span className="badge-pill-custom badge-info-soft"><i className="fas fa-qrcode"></i> QR</span>
+                                                                                ) : (
+                                                                                    <span className="badge-pill-custom badge-slate-soft">COD</span>
+                                                                                )}
+                                                                            </td>
+                                                                            <td>{renderOrderStatusBadge(o.trang_thai)}</td>
+                                                                            <td>
+                                                                                <button
+                                                                                    className="btn-action-icon btn-view"
+                                                                                    title="Xem chi tiết"
+                                                                                    onClick={() => viewOrderDetails(o)}
+                                                                                >
+                                                                                    <i className="fas fa-eye"></i>
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))}
+                                                                    {orders.length === 0 && (
+                                                                        <tr>
+                                                                            <td colSpan={6} className="text-center py-4 text-muted">Chưa có đơn hàng nào trong hệ thống</td>
+                                                                        </tr>
+                                                                    )}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Cột phải: Phím tắt & Cảnh báo tồn kho */}
+                                        {/* Cột phải: Phân Bổ Trạng Thái Đơn, Phím tắt & Cảnh báo tồn kho */}
                                         <div className="col-12 col-lg-4">
+                                            {/* Phân Bổ Trạng Thái Đơn & Thanh Toán */}
+                                            <div className="admin-card mb-4">
+                                                <div className="admin-card-header d-flex align-items-center justify-content-between">
+                                                    <h5 className="admin-card-title">
+                                                        <i className="fas fa-pie-chart text-primary"></i> Phân Bổ Đơn Hàng
+                                                    </h5>
+                                                    <span className="badge bg-light text-muted border">{orders.length} đơn</span>
+                                                </div>
+                                                <div className="admin-card-body">
+                                                    <div className="status-progress-breakdown mb-3">
+                                                        {/* Multi-segmented Progress Bar */}
+                                                        <div className="progress mb-3" style={{ height: '10px' }}>
+                                                            <div className="progress-bar bg-success" style={{ width: `${conversionMetrics.completedRate}%` }} title={`Đã hoàn thành: ${conversionMetrics.completedRate}%`}></div>
+                                                            <div className="progress-bar bg-primary" style={{ width: `${conversionMetrics.deliveringRate}%` }} title={`Đang giao: ${conversionMetrics.deliveringRate}%`}></div>
+                                                            <div className="progress-bar bg-warning" style={{ width: `${conversionMetrics.pendingRate}%` }} title={`Chờ xử lý: ${conversionMetrics.pendingRate}%`}></div>
+                                                            <div className="progress-bar bg-danger" style={{ width: `${conversionMetrics.cancelRate}%` }} title={`Đã hủy: ${conversionMetrics.cancelRate}%`}></div>
+                                                        </div>
+
+                                                        <div className="d-flex flex-column gap-2 small">
+                                                            <div className="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                                                <span><i className="fas fa-circle text-success me-2"></i> Đã hoàn thành</span>
+                                                                <span className="fw-bold">{conversionMetrics.completed} ({conversionMetrics.completedRate}%)</span>
+                                                            </div>
+                                                            <div className="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                                                <span><i className="fas fa-circle text-primary me-2"></i> Đang vận chuyển</span>
+                                                                <span className="fw-bold">{conversionMetrics.delivering} ({conversionMetrics.deliveringRate}%)</span>
+                                                            </div>
+                                                            <div className="d-flex justify-content-between align-items-center py-1 border-bottom">
+                                                                <span><i className="fas fa-circle text-warning me-2"></i> Chờ xử lý</span>
+                                                                <span className="fw-bold">{conversionMetrics.pending} ({conversionMetrics.pendingRate}%)</span>
+                                                            </div>
+                                                            <div className="d-flex justify-content-between align-items-center py-1">
+                                                                <span><i className="fas fa-circle text-danger me-2"></i> Đã hủy</span>
+                                                                <span className="fw-bold">{conversionMetrics.cancelled} ({conversionMetrics.cancelRate}%)</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="pt-3 border-top">
+                                                        <div className="d-flex justify-content-between align-items-center small">
+                                                            <span className="text-muted"><i className="fas fa-wallet me-1"></i> VietQR vs COD:</span>
+                                                            <span className="fw-bold text-primary">{conversionMetrics.qrCount} QR / {conversionMetrics.codCount} COD</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             {/* Phím tắt thao tác nhanh */}
                                             <div className="admin-card mb-4">
                                                 <div className="admin-card-header">

@@ -910,3 +910,262 @@
     padding: 18px;
   }
 }
+
+/* ============================================================
+   SMART BUSINESS ANALYTICS & CHARTS
+   ============================================================ */
+.business-analytics-card {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.kpi-mini-card {
+  padding: 14px 14px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+  min-height: 110px;
+}
+
+.kpi-mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.kpi-mini-card.kpi-success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+
+.kpi-mini-card.kpi-blue {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #bfdbfe;
+}
+
+.kpi-mini-card.kpi-amber {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+
+.kpi-mini-card.kpi-purple {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: #e9d5ff;
+}
+
+.kpi-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  line-height: 1.25;
+}
+
+.kpi-value {
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.text-amber-custom {
+  color: #d97706;
+}
+
+.text-purple-custom {
+  color: #7c3aed;
+}
+
+.kpi-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-wrapper-box {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+}
+
+.svg-chart-container {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.chart-hover-detail-bar {
+  background: #f8fafc;
+  font-size: 0.85rem;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Rank Badges for Best Sellers */
+.rank-badge {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.rank-badge.rank-1 {
+  font-size: 1.2rem;
+}
+
+.rank-badge.rank-2 {
+  font-size: 1.15rem;
+}
+
+.rank-badge.rank-3 {
+  font-size: 1.1rem;
+}
+
+.rank-badge.rank-4,
+.rank-badge.rank-5 {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.border-bottom-light {
+  border-bottom: 1px dashed #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.border-bottom-light:hover {
+  background-color: #f8fafc;
+}
+
+.border-bottom-light:last-child {
+  border-bottom: none;
+}
+
+/* ============================================================
+   BEST SELLER ROW CARD (3 Dedicated Columns)
+   ============================================================ */
+.bestseller-row-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  transition: all 0.2s ease;
+}
+
+.bestseller-row-card:hover {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.bestseller-rank-img {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.bestseller-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+}
+
+.bestseller-main-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bestseller-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bestseller-name {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+}
+
+.bestseller-cat-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #475569;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bestseller-progress-wrap .progress {
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bestseller-stats-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 150px;
+  text-align: right;
+}
+
+.bestseller-revenue {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.bestseller-sold-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+
+
