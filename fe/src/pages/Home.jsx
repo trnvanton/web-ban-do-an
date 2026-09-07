@@ -222,7 +222,7 @@ export default function Home() {
                         <div className="col-md-6 col-lg-3">
                             <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
                                 <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
-                                    <i className="fas fa-wand-magic-sparkles fa-2x text-white"></i>
+                                    <i className="fas fa-magic fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
                                     <h5 className="fw-bold mb-2 text-dark">Gợi Ý Món Ăn Thông Minh</h5>
@@ -233,7 +233,7 @@ export default function Home() {
                         <div className="col-md-6 col-lg-3">
                             <div className="featurs-item text-center rounded-4 bg-light p-4 h-100 d-flex flex-column align-items-center justify-content-center shadow-sm border border-light transition-all hover-lift">
                                 <div className="featurs-icon rounded-circle bg-warning mb-4 mx-auto d-flex align-items-center justify-content-center" style={{ width: 80, height: 80 }}>
-                                    <i className="fa fa-shield-halved fa-2x text-white"></i>
+                                    <i className="fas fa-shield-alt fa-2x text-white"></i>
                                 </div>
                                 <div className="featurs-content text-center">
                                     <h5 className="fw-bold mb-2 text-dark">100% Vệ Sinh An Toàn</h5>
