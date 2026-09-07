@@ -286,9 +286,13 @@ export default function Admin() {
         };
     }, [orders, chartRange]);
 
-    // Top sản phẩm bán chạy nhất
+    // Top sản phẩm bán chạy nhất (Xếp hạng theo số lượng bán và doanh thu thực tế)
     const topBestSellers = useMemo(() => {
-        const sorted = [...products].sort((a, b) => Number(b.da_ban || 0) - Number(a.da_ban || 0));
+        const sorted = [...products].sort((a, b) => {
+            const soldDiff = Number(b.da_ban || 0) - Number(a.da_ban || 0);
+            if (soldDiff !== 0) return soldDiff;
+            return (Number(b.gia || 0) * Number(b.da_ban || 0)) - (Number(a.gia || 0) * Number(a.da_ban || 0));
+        });
         const maxSold = Math.max(...sorted.map(p => Number(p.da_ban || 0)), 1);
         return sorted.slice(0, 5).map((p, idx) => ({
             ...p,
