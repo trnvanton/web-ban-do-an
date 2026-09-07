@@ -109,31 +109,37 @@ export default {
                     }));
                 };
 
-                let reqBodyText = '';
                 if (request.method !== 'GET' && request.method !== 'HEAD') {
                     req._body = true; // Đánh dấu đã đọc body để Express body-parser bỏ qua stream, chống treo Worker
-                    try {
-                        reqBodyText = await request.clone().text();
-                    } catch (e) {
-                        try {
-                            reqBodyText = await request.text();
-                        } catch (e2) {
-                            reqBodyText = '';
-                        }
-                    }
+                    const cType = (request.headers.get('content-type') || '').toLowerCase();
 
-                    if (reqBodyText && reqBodyText.trim().length > 0) {
+                    if (cType.includes('multipart/form-data')) {
                         try {
-                            req.body = JSON.parse(reqBodyText);
-                        } catch (e) {
-                            try {
-                                req.body = Object.fromEntries(new URLSearchParams(reqBodyText));
-                            } catch (e2) {
-                                req.body = reqBodyText;
+                            const fd = await request.formData();
+                            const parsed = {};
+                            for (const [key, val] of fd.entries()) {
+                                if (typeof val === 'string') {
+                                    parsed[key] = val;
+                                }
                             }
+                            req.body = parsed;
+                        } catch (eFd) {
+                            req.body = {};
+                        }
+                    } else if (cType.includes('application/x-www-form-urlencoded')) {
+                        try {
+                            const txt = await request.text();
+                            req.body = Object.fromEntries(new URLSearchParams(txt));
+                        } catch (eUrl) {
+                            req.body = {};
                         }
                     } else {
-                        req.body = {};
+                        try {
+                            const txt = await request.text();
+                            req.body = txt && txt.trim().length > 0 ? JSON.parse(txt) : {};
+                        } catch (eJson) {
+                            req.body = {};
+                        }
                     }
                 } else {
                     req.body = {};

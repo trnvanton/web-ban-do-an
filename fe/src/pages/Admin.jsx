@@ -386,14 +386,24 @@ export default function Admin() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const fd = new FormData();
-            fd.append('ten_san_pham', editProductForm.ten_san_pham);
-            fd.append('danh_muc', editProductForm.danh_muc);
-            fd.append('gia', editProductForm.gia);
-            fd.append('so_luong_ton', editProductForm.so_luong_ton);
-            fd.append('mo_ta', editProductForm.mo_ta);
-            if (editProductForm.file) fd.append('hinh_anh', editProductForm.file);
-            await api.put('/api/admin/sua-san-pham/' + editingProduct.id, fd);
+            if (editProductForm.file) {
+                const fd = new FormData();
+                fd.append('ten_san_pham', editProductForm.ten_san_pham);
+                fd.append('danh_muc', editProductForm.danh_muc);
+                fd.append('gia', editProductForm.gia);
+                fd.append('so_luong_ton', editProductForm.so_luong_ton);
+                fd.append('mo_ta', editProductForm.mo_ta);
+                fd.append('hinh_anh', editProductForm.file);
+                await api.put('/api/admin/sua-san-pham/' + editingProduct.id, fd);
+            } else {
+                await api.put('/api/admin/sua-san-pham/' + editingProduct.id, {
+                    ten_san_pham: editProductForm.ten_san_pham,
+                    danh_muc: editProductForm.danh_muc,
+                    gia: editProductForm.gia,
+                    so_luong_ton: editProductForm.so_luong_ton,
+                    mo_ta: editProductForm.mo_ta
+                });
+            }
             await dialog.alert('Cập nhật thông tin sản phẩm thành công!', { type: 'success' });
             setShowEditProduct(false);
             setEditProductForm(emptyProductForm());
@@ -466,13 +476,22 @@ export default function Admin() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const fd = new FormData();
-            fd.append('ten_mon', editDishForm.ten_mon);
-            fd.append('nguyen_lieu_chinh', editDishForm.nguyen_lieu_chinh);
-            fd.append('cong_thuc', editDishForm.cong_thuc);
-            fd.append('loai_mon', editDishForm.loai_mon);
-            if (editDishForm.file) fd.append('hinh_anh', editDishForm.file);
-            await api.put('/api/admin/sua-mon-an/' + editingDish.id, fd);
+            if (editDishForm.file) {
+                const fd = new FormData();
+                fd.append('ten_mon', editDishForm.ten_mon);
+                fd.append('nguyen_lieu_chinh', editDishForm.nguyen_lieu_chinh);
+                fd.append('cong_thuc', editDishForm.cong_thuc);
+                fd.append('loai_mon', editDishForm.loai_mon);
+                fd.append('hinh_anh', editDishForm.file);
+                await api.put('/api/admin/sua-mon-an/' + editingDish.id, fd);
+            } else {
+                await api.put('/api/admin/sua-mon-an/' + editingDish.id, {
+                    ten_mon: editDishForm.ten_mon,
+                    nguyen_lieu_chinh: editDishForm.nguyen_lieu_chinh,
+                    cong_thuc: editDishForm.cong_thuc,
+                    loai_mon: editDishForm.loai_mon
+                });
+            }
             await dialog.alert('Cập nhật món ăn gợi ý thành công!', { type: 'success' });
             setShowEditDish(false);
             setEditDishForm(emptyDishForm());
