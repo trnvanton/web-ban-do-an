@@ -220,31 +220,43 @@ app.post('/api/menu/generate', async (req, res) => {
         const usedOverallIds = new Set();
         const selectedMenu = [];
 
+        // Kiểm tra xem người dùng có chọn nguyên liệu chính hay chỉ chọn gia vị
+        const hasCoreUserSelection = analyzedDishes.some(d => d.analysis?.isCoreMatched);
+
         const pickSmartDish = (categoryPool, globalPool, usedToday) => {
-            // Tách thành: Món khớp nguyên liệu vs Món gợi ý thêm
-            const matchedCandidates = categoryPool.filter(d => (d.analysis?.matchScore || 0) > 0 && !usedToday.has(d.id));
+            // Tách thành 3 nhóm ưu tiên:
+            // Nhóm 1: Khớp nguyên liệu chính (Thịt, cá, tôm, rau củ chính đã chọn)
+            const coreMatchedCandidates = categoryPool.filter(d => d.analysis?.isCoreMatched && !usedToday.has(d.id));
+            // Nhóm 2: Khớp gia vị phụ (nhưng không có nguyên liệu chính)
+            const seasoningMatchedCandidates = categoryPool.filter(d => !d.analysis?.isCoreMatched && (d.analysis?.matchScore || 0) > 0 && !usedToday.has(d.id));
+            // Nhóm 3: Món khác chưa dùng
             const unmatchedCandidates = categoryPool.filter(d => (!d.analysis || d.analysis.matchScore === 0) && !usedToday.has(d.id));
 
             let picked = null;
             let isMatched = false;
 
-            // 1. Ưu tiên món khớp nguyên liệu chưa dùng lần nào
-            const availableMatchedFresh = matchedCandidates.filter(d => !usedOverallIds.has(d.id));
-            if (availableMatchedFresh.length > 0) {
-                // Sắp xếp theo độ khớp cao nhất
-                availableMatchedFresh.sort((a, b) => (b.analysis?.matchPercentage || 0) - (a.analysis?.matchPercentage || 0));
-                picked = availableMatchedFresh[0];
+            // 1. Ưu tiên số 1: Món khớp nguyên liệu chính chưa dùng
+            const freshCore = coreMatchedCandidates.filter(d => !usedOverallIds.has(d.id));
+            if (freshCore.length > 0) {
+                freshCore.sort((a, b) => (b.analysis?.matchPercentage || 0) - (a.analysis?.matchPercentage || 0));
+                picked = freshCore[0];
                 isMatched = true;
-            } else if (matchedCandidates.length > 0 && activeMode === 'ingredients' && usedOverallIds.size < matchedCandidates.length) {
-                picked = matchedCandidates[0];
+            } else if (coreMatchedCandidates.length > 0 && activeMode === 'ingredients' && usedOverallIds.size < coreMatchedCandidates.length) {
+                picked = coreMatchedCandidates[0];
+                isMatched = true;
+            } else if (!hasCoreUserSelection && seasoningMatchedCandidates.length > 0) {
+                // Nếu user chỉ chọn mỗi gia vị (không chọn thịt/rau nào), ưu tiên món dùng gia vị đó
+                const freshSeasoning = seasoningMatchedCandidates.filter(d => !usedOverallIds.has(d.id));
+                picked = freshSeasoning.length > 0 ? freshSeasoning[0] : seasoningMatchedCandidates[0];
                 isMatched = true;
             } else {
-                // 2. Nếu đã dùng hết món khớp nguyên liệu -> Bổ sung thông minh món khác (chống trùng lặp)
-                const freshUnmatched = unmatchedCandidates.filter(d => !usedOverallIds.has(d.id));
-                if (freshUnmatched.length > 0) {
-                    picked = freshUnmatched[Math.floor(Math.random() * freshUnmatched.length)];
-                } else if (unmatchedCandidates.length > 0) {
-                    picked = unmatchedCandidates[Math.floor(Math.random() * unmatchedCandidates.length)];
+                // 2. Bổ sung thông minh các món còn lại để hoàn chỉnh mâm cơm đầy đủ dinh dưỡng
+                const allAvailableExtra = [...seasoningMatchedCandidates, ...unmatchedCandidates];
+                const freshExtra = allAvailableExtra.filter(d => !usedOverallIds.has(d.id));
+                if (freshExtra.length > 0) {
+                    picked = freshExtra[Math.floor(Math.random() * freshExtra.length)];
+                } else if (allAvailableExtra.length > 0) {
+                    picked = allAvailableExtra[Math.floor(Math.random() * allAvailableExtra.length)];
                 } else {
                     const fallback = globalPool.filter(d => !usedToday.has(d.id));
                     picked = fallback[Math.floor(Math.random() * fallback.length)] || globalPool[0] || allDishes[0];

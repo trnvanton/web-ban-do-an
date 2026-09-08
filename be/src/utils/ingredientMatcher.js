@@ -3,167 +3,349 @@
  * Hỗ trợ tra cứu món ăn & gợi ý thực đơn chuẩn ẩm thực Việt Nam
  */
 
-const CULINARY_SYNONYMS = {
-    'nghao': ['ngao', 'nghêu', 'ngêu'],
-    'ngao': ['nghao', 'nghêu', 'ngêu'],
-    'nghêu': ['ngao', 'nghao', 'ngêu'],
-    'ngêu': ['ngao', 'nghao', 'nghêu'],
-    'ớt bột': ['bột ớt', 'ớt bột'],
-    'bột ớt': ['ớt bột', 'bột ớt'],
-    'bông cải': ['súp lơ'],
-    'súp lơ': ['bông cải'],
-    'khổ qua': ['mướp đắng'],
-    'mướp đắng': ['khổ qua'],
-    'dứa': ['thơm', 'khóm'],
-    'thơm': ['dứa', 'khóm'],
-    'khóm': ['dứa', 'thơm'],
-    'dọc mùng': ['bạc hà'],
-    'bạc hà': ['dọc mùng'],
-    'ngò gai': ['mùi tàu'],
-    'mùi tàu': ['ngò gai'],
-    'rau mùi': ['ngò rí'],
-    'ngò rí': ['rau mùi'],
-    'ngò om': ['rau ngổ'],
-    'rau ngổ': ['ngò om'],
-    'đậu hũ': ['đậu phụ', 'tàu hũ'],
-    'đậu phụ': ['đậu hũ', 'tàu hũ'],
-    'thịt băm': ['thịt xay', 'nạc vai xay', 'nạc xay', 'thịt heo xay', 'thịt nạc xay'],
-    'thịt xay': ['thịt băm'],
-    'lạc': ['đậu phộng'],
-    'đậu phộng': ['lạc'],
-    'dưa leo': ['dưa chuột'],
-    'dưa chuột': ['dưa leo'],
-    'tôm tươi': ['tôm'],
-    'mực tươi': ['mực'],
-    'cá phi lê': ['cá']
-};
+/**
+ * Hàm tạo biểu thức chính quy (Regex) với ranh giới từ chuẩn Unicode Tiếng Việt
+ * Tránh lỗi của \b trong Javascript khi gặp các ký tự tiếng Việt có dấu (á, à, ỏ, ớ, ư...)
+ */
+function makeVnRegex(words) {
+    const list = Array.isArray(words) ? words : [words];
+    const escaped = list.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    return new RegExp(`(?<![\\p{L}\\p{N}])(${escaped})(?![\\p{L}\\p{N}])`, 'iu');
+}
+
+// Danh sách các nhóm định danh nguyên liệu ẩm thực chuẩn xác (Canonical Mapping)
+const INGREDIENT_CANONICAL_RULES = [
+    // 1. Thịt gia cầm & Các bộ phận
+    {
+        canonical: 'thịt gà',
+        match: makeVnRegex(['thịt gà', 'gà', 'gà ta', 'gà thả vườn', 'cánh gà', 'đùi gà', 'tỏi gà', 'đùi tỏi', 'đùi tỏi gà', 'ức gà', 'chân gà', 'mề gà', 'lòng gà', 'gà công nghiệp'])
+    },
+    {
+        canonical: 'thịt vịt',
+        match: makeVnRegex(['thịt vịt', 'vịt', 'vịt cỏ', 'ức vịt', 'đùi vịt'])
+    },
+
+    // 2. Thịt heo & Sườn
+    {
+        canonical: 'thịt ba chỉ',
+        match: makeVnRegex(['thịt ba chỉ', 'ba chỉ', 'ba rọi', 'thịt ba rọi', 'thịt ba chỉ heo'])
+    },
+    {
+        canonical: 'thịt băm',
+        match: makeVnRegex(['thịt băm', 'thịt xay', 'thịt heo xay', 'nạc vai xay', 'nạc xay', 'thịt nạc xay'])
+    },
+    {
+        canonical: 'thịt thăn lợn',
+        match: makeVnRegex(['thịt thăn lợn', 'thịt thăn heo', 'thịt nạc thăn', 'thịt lợn nạc', 'thịt heo nạc'])
+    },
+    {
+        canonical: 'sườn heo',
+        match: makeVnRegex(['sườn heo', 'sườn non', 'sườn sụn', 'sườn lợn', 'sườn']),
+        exclude: makeVnRegex(['sườn bò', 'dẻ sườn bò'])
+    },
+    {
+        canonical: 'thịt heo',
+        match: makeVnRegex(['thịt heo', 'thịt lợn', 'tai heo', 'chân giò', 'móng giò'])
+    },
+
+    // 3. Thịt bò
+    {
+        canonical: 'thịt bò',
+        match: makeVnRegex(['thịt bò', 'bò', 'bắp bò', 'nạm bò', 'dẻ sườn bò', 'thăn bò', 'gầu bò', 'bò úc', 'bò nạc', 'thịt thăn bò']),
+        exclude: makeVnRegex(['bơ', 'bột', 'bọ', 'bồ câu'])
+    },
+
+    // 4. Thủy hải sản
+    {
+        canonical: 'tôm tươi',
+        match: makeVnRegex(['tôm', 'tôm sú', 'tôm tươi', 'tôm nõn', 'tôm thẻ', 'tôm lột', 'tôm đồng'])
+    },
+    {
+        canonical: 'mực tươi',
+        match: makeVnRegex(['mực', 'mực tươi', 'mực ống', 'mực lá', 'mực mai', 'mực trứng'])
+    },
+    {
+        canonical: 'cá lóc (hoặc cá basa)',
+        match: makeVnRegex(['cá lóc', 'cá basa', 'cá quả', 'cá tràu', 'cá diêu hồng', 'cá hồi', 'cá rô', 'cá chép', 'cá thu', 'cá nục', 'cá bớp', 'cá phi lê', 'phi lê cá', 'cá']),
+        exclude: makeVnRegex(['nước mắm', 'mắm cá', 'nước mắm ngon', 'cà chua', 'cà rốt'])
+    },
+    {
+        canonical: 'cua đồng / cua biển',
+        match: makeVnRegex(['cua đồng', 'cua biển', 'cua xay', 'gạch cua', 'cua', 'ghẹ'])
+    },
+    {
+        canonical: 'nghêu / nghêu hấp',
+        match: makeVnRegex(['nghêu', 'ngao', 'ngao biển', 'nghêu biển', 'ngao hoa'])
+    },
+    {
+        canonical: 'bạch tuộc',
+        match: makeVnRegex(['bạch tuộc', 'râu bạch tuộc'])
+    },
+    {
+        canonical: 'chả lụa / giò lụa',
+        match: makeVnRegex(['chả lụa', 'giò lụa', 'giò bì', 'chả bì'])
+    },
+    {
+        canonical: 'lạp xưởng',
+        match: makeVnRegex(['lạp xưởng', 'lạp sườn'])
+    },
+
+    // 5. Trứng
+    {
+        canonical: 'trứng cút',
+        match: makeVnRegex(['trứng cút', 'trứng chim cút'])
+    },
+    {
+        canonical: 'trứng',
+        match: makeVnRegex(['trứng gà', 'trứng vịt', 'trứng ta', 'trứng']),
+        exclude: makeVnRegex(['trứng cút', 'trứng cá'])
+    },
+
+    // 6. Đậu & Nấm
+    {
+        canonical: 'đậu hũ',
+        match: makeVnRegex(['đậu hũ', 'đậu phụ', 'tàu hũ', 'đậu non', 'đậu trắng'])
+    },
+    {
+        canonical: 'mộc nhĩ',
+        match: makeVnRegex(['mộc nhĩ', 'nấm mèo'])
+    },
+    {
+        canonical: 'nấm hương',
+        match: makeVnRegex(['nấm hương', 'nấm đông cô'])
+    },
+    {
+        canonical: 'nấm kim châm',
+        match: makeVnRegex(['nấm kim châm'])
+    },
+
+    // 7. Rau củ quả
+    {
+        canonical: 'bông cải xanh',
+        match: makeVnRegex(['bông cải', 'súp lơ', 'bông cải xanh', 'súp lơ xanh'])
+    },
+    {
+        canonical: 'cà chua',
+        match: makeVnRegex(['cà chua', 'cà chua bi', 'cà chua hữu cơ']),
+        exclude: makeVnRegex(['sốt cà chua', 'tương cà', 'cà chua paste', 'cà chua cô đặc'])
+    },
+    {
+        canonical: 'khoai tây',
+        match: makeVnRegex(['khoai tây'])
+    },
+    {
+        canonical: 'cà rốt',
+        match: makeVnRegex(['cà rốt'])
+    },
+    {
+        canonical: 'bắp cải',
+        match: makeVnRegex(['bắp cải', 'bắp cải trắng', 'bắp cải tím'])
+    },
+    {
+        canonical: 'bắp / ngô ngọt',
+        match: makeVnRegex(['bắp ngọt', 'ngô ngọt', 'ngô mỹ', 'bắp mỹ', 'ngô nếp', 'bắp nếp']),
+        exclude: makeVnRegex(['bột bắp', 'bột ngô', 'bắp bò', 'bắp cải'])
+    },
+    {
+        canonical: 'ớt chuông',
+        match: makeVnRegex(['ớt chuông', 'ớt đà lạt', 'ớt ngọt'])
+    },
+    {
+        canonical: 'rau muống',
+        match: makeVnRegex(['rau muống'])
+    },
+    {
+        canonical: 'cải thìa / cải ngọt',
+        match: makeVnRegex(['cải thìa', 'cải ngọt', 'rau cải', 'cải bẹ'])
+    },
+    {
+        canonical: 'bí đỏ',
+        match: makeVnRegex(['bí đỏ', 'hồ lô', 'bí ngô'])
+    },
+    {
+        canonical: 'bí đao',
+        match: makeVnRegex(['bí đao', 'bí xanh'])
+    },
+    {
+        canonical: 'su su',
+        match: makeVnRegex(['su su'])
+    },
+    {
+        canonical: 'măng tây',
+        match: makeVnRegex(['măng tây'])
+    },
+    {
+        canonical: 'đậu hà lan',
+        match: makeVnRegex(['đậu hà lan', 'đậu cô ve', 'đậu cove'])
+    },
+    {
+        canonical: 'khổ qua / trái đắng',
+        match: makeVnRegex(['khổ qua', 'mướp đắng'])
+    },
+    {
+        canonical: 'dưa leo / dưa chuột',
+        match: makeVnRegex(['dưa leo', 'dưa chuột'])
+    },
+    {
+        canonical: 'giá đỗ',
+        match: makeVnRegex(['giá đỗ', 'giá sống', 'giá sạch'])
+    },
+    {
+        canonical: 'dứa / thơm',
+        match: makeVnRegex(['dứa', 'thơm', 'khóm'])
+    },
+    {
+        canonical: 'me chua / bạc hà',
+        match: makeVnRegex(['me chua', 'cốt me', 'me', 'dọc mùng', 'bạc hà'])
+    },
+    {
+        canonical: 'khoai lang',
+        match: makeVnRegex(['khoai lang', 'khoai lang mật'])
+    },
+    {
+        canonical: 'xà lách',
+        match: makeVnRegex(['xà lách', 'rau sống', 'tía tô', 'rau thơm'])
+    },
+    {
+        canonical: 'cần tây',
+        match: makeVnRegex(['cần tây', 'rau cần', 'tỏi tây', 'boa-rô'])
+    },
+    {
+        canonical: 'hành lá',
+        match: makeVnRegex(['hành lá', 'hành hoa', 'ngò gai', 'ngò om', 'mùi tàu', 'ngò rí', 'rau mùi'])
+    },
+    {
+        canonical: 'hành tím',
+        match: makeVnRegex(['hành tím', 'hành khô', 'hành củ'])
+    },
+    {
+        canonical: 'hành tây',
+        match: makeVnRegex(['hành tây'])
+    },
+
+    // 8. Gia vị & Phụ gia
+    {
+        canonical: 'tỏi',
+        match: makeVnRegex(['tỏi', 'tỏi khô', 'tỏi ta', 'tỏi băm', 'tỏi phi', 'củ tỏi', 'tỏi cô đơn', 'tỏi lý sơn']),
+        exclude: makeVnRegex(['tỏi gà', 'đùi tỏi', 'đùi tỏi gà', 'tỏi tây', 'boa-rô'])
+    },
+    {
+        canonical: 'ớt',
+        match: makeVnRegex(['ớt', 'ớt hiểm', 'ớt tươi', 'ớt sừng', 'ớt đỏ', 'ớt chỉ thiên', 'ớt băm', 'ớt khô', 'ớt bột', 'ớt xanh', 'ớt xiêm']),
+        exclude: makeVnRegex(['tương ớt', 'dầu ớt', 'sa tế', 'ớt chuông'])
+    },
+    {
+        canonical: 'tương ớt',
+        match: makeVnRegex(['tương ớt', 'tương ớt chin-su', 'tương ớt chua ngọt'])
+    },
+    {
+        canonical: 'nước mắm',
+        match: makeVnRegex(['nước mắm', 'mắm cá cơm', 'nước mắm ngon', 'nước mắm truyền thống'])
+    },
+    {
+        canonical: 'đường',
+        match: makeVnRegex(['đường', 'đường cát', 'đường phèn', 'đường trắng'])
+    },
+    {
+        canonical: 'nước hàng',
+        match: makeVnRegex(['nước hàng', 'nước màu', 'kẹo đắng'])
+    },
+    {
+        canonical: 'muối',
+        match: makeVnRegex(['muối', 'muối hạt', 'muối tinh', 'muối iot'])
+    },
+    {
+        canonical: 'tiêu xay',
+        match: makeVnRegex(['tiêu', 'tiêu xay', 'tiêu sọ', 'tiêu đen', 'tiêu phú quốc'])
+    },
+    {
+        canonical: 'giấm',
+        match: makeVnRegex(['giấm', 'giấm gạo', 'giấm táo'])
+    },
+    {
+        canonical: 'gừng',
+        match: makeVnRegex(['gừng', 'gừng tươi', 'gừng già', 'gừng củ'])
+    },
+    {
+        canonical: 'sả',
+        match: makeVnRegex(['sả', 'củ sả', 'sả cây', 'sả băm'])
+    },
+    {
+        canonical: 'dầu hào',
+        match: makeVnRegex(['dầu hào'])
+    },
+    {
+        canonical: 'xì dầu / nước tương',
+        match: makeVnRegex(['xì dầu', 'nước tương', 'maggi'])
+    },
+    {
+        canonical: 'mắm tôm',
+        match: makeVnRegex(['mắm tôm'])
+    },
+    {
+        canonical: 'mắm nêm',
+        match: makeVnRegex(['mắm nêm'])
+    },
+    {
+        canonical: 'mật ong',
+        match: makeVnRegex(['mật ong'])
+    },
+    {
+        canonical: 'dầu ăn',
+        match: makeVnRegex(['dầu ăn', 'dầu thực vật'])
+    },
+    {
+        canonical: 'bột bắp / bột năng',
+        match: makeVnRegex(['bột bắp', 'bột năng', 'bột đao', 'bột chiên giòn', 'bột chiên'])
+    },
+    {
+        canonical: 'nước dừa',
+        match: makeVnRegex(['nước dừa', 'dừa xiêm', 'nước dừa tươi'])
+    }
+];
+
+// Danh sách các gia vị cơ bản / phụ gia (không phải nhóm thịt, hải sản, rau củ chính)
+const SEASONING_CANONICALS = new Set([
+    'tỏi', 'ớt', 'tương ớt', 'nước mắm', 'đường', 'nước hàng', 'muối', 'tiêu xay',
+    'giấm', 'gừng', 'sả', 'dầu hào', 'xì dầu / nước tương', 'mắm tôm', 'mắm nêm',
+    'mật ong', 'dầu ăn', 'bột bắp / bột năng', 'hạt nêm', 'bột ngọt (mì chính)', 'ngũ vị hương'
+]);
 
 /**
- * Trích xuất tất cả các từ khóa tra cứu đại diện cho một nguyên liệu
- * Xử lý bỏ tính từ (tươi, chín, sạch, ngon, vàng, ruột đỏ...)
- * và phân giải từ đồng nghĩa ẩm thực.
+ * Trích xuất danh sách Canonical Keys chuẩn của một nguyên liệu
  */
-function getIngredientSearchKeys(name) {
-    if (!name || typeof name !== 'string') return [];
-    const raw = name.toLowerCase().trim();
-    const keys = new Set();
-    keys.add(raw);
+function getCanonicalKeys(rawName) {
+    if (!rawName || typeof rawName !== 'string') return [];
+    const text = rawName.toLowerCase().trim();
+    if (!text) return [];
 
-    // 1. Phân tách phần trong ngoặc đơn (ví dụ: "Cá lóc (hoặc cá basa)" => "cá lóc", "cá basa")
-    const paren = raw.match(/\((.*?)\)/);
-    if (paren) {
-        paren[1].split(/[\/,]/).forEach(p => {
-            const clean = p.replace(/hoặc/g, '').trim();
-            if (clean.length >= 2) keys.add(clean);
-        });
-    }
+    const result = new Set();
 
-    const noParen = raw.replace(/\(.*?\)/g, '').trim();
-    noParen.split(/[\/,]/).forEach(p => {
-        const clean = p.replace(/hoặc.*?$/g, '').trim();
-        if (clean.length >= 2) keys.add(clean);
-    });
-
-    // 2. Lọc bỏ các từ mô tả phụ gia/tính từ không phải danh từ cốt lõi
-    const descriptorRegex = /\b(tươi|chín|sạch|ngon|hoặc|vàng|chín vàng|ruột đỏ hoặc trắng|ruột đỏ|ruột trắng|giã|phi lê|cắt khúc|loại 1|non|khô|bánh tẻ)\b/g;
-    
-    for (const k of [...keys]) {
-        const stripped = k.replace(descriptorRegex, ' ').replace(/\s+/g, ' ').trim();
-        if (stripped.length >= 2) {
-            keys.add(stripped);
-        }
-
-        // Tự động nhận diện danh từ cốt lõi theo ẩm thực
-        if (stripped.startsWith('xoài')) keys.add('xoài');
-        if (stripped.startsWith('dứa')) keys.add('dứa');
-        if (stripped.startsWith('tôm')) keys.add('tôm');
-        if (stripped.startsWith('mực')) keys.add('mực');
-        if (stripped.startsWith('cua')) keys.add('cua');
-        if (stripped.startsWith('cá ') || stripped === 'cá phi lê') keys.add('cá');
-        if (stripped === 'thịt bò' || stripped.includes('thịt bò')) {
-            keys.add('thịt bò');
-            keys.add('bò');
-        }
-        if (stripped === 'thịt gà' || stripped.includes('thịt gà')) {
-            keys.add('thịt gà');
-            keys.add('gà');
-        }
-        if (stripped === 'sườn heo') keys.add('sườn');
-        if (stripped === 'trứng') keys.add('trứng');
-        if (stripped === 'đậu hũ') {
-            keys.add('đậu hũ');
-            keys.add('đậu phụ');
-        }
-    }
-
-    // 3. Mở rộng từ đồng nghĩa
-    for (const k of [...keys]) {
-        for (const [syn, list] of Object.entries(CULINARY_SYNONYMS)) {
-            if (k.includes(syn)) {
-                list.forEach(alt => keys.add(k.replace(syn, alt)));
+    for (const rule of INGREDIENT_CANONICAL_RULES) {
+        if (rule.match.test(text)) {
+            const hasExclude = rule.exclude && rule.exclude.test(text);
+            if (!hasExclude) {
+                result.add(rule.canonical);
             }
         }
     }
 
-    return [...keys].filter(k => k.length >= 2);
-}
+    if (result.size === 0) {
+        result.add(text);
+    }
 
-function escapeRegex(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-const VN_LETTERS = 'a-z0-9àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ';
-
-/**
- * Kiểm tra xem `phrase` có xuất hiện như một từ / cụm từ độc lập trong `text` không (Word Boundary Check)
- * Ngăn chặn lỗi chuỗi con: "miếng" chứa "miến", "cát" chứa "cá", "cách" chứa "cá", "mẹo" chứa "me", v.v.
- */
-function containsWholePhrase(text, phrase) {
-    if (!text || !phrase) return false;
-    const cleanText = text.toLowerCase();
-    const cleanPhrase = phrase.toLowerCase().trim();
-    if (!cleanPhrase) return false;
-
-    // Phân tách ranh giới từ tiếng Việt: trước và sau cụm từ phải là ký tự không phải chữ cái/số hoặc đầu/cuối chuỗi
-    const pattern = `(^|[^${VN_LETTERS}])${escapeRegex(cleanPhrase)}($|[^${VN_LETTERS}])`;
-    const regex = new RegExp(pattern, 'i');
-    return regex.test(cleanText);
+    return [...result];
 }
 
 /**
- * Xây dựng chuỗi văn bản đại diện cho món ăn để tìm kiếm
+ * Kiểm tra xem nguyên liệu trong món ăn có khớp với nguyên liệu người dùng chọn hay không
  */
-function getDishSearchCorpus(dish) {
-    if (!dish) return '';
-    const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
-    
-    // Lấy danh sách tên nguyên liệu định lượng
-    const nguyenLieuList = parseJSON(dish.nguyen_lieu_chi_tiet, []);
-    const ingNames = Array.isArray(nguyenLieuList) ? nguyenLieuList.map(i => i.ten || '').join(' ') : '';
-    
-    // Bỏ gia vị "nước mắm cốt cá" để tránh hiểu nhầm "cá" khi tìm cá hải sản
-    const cleanNgLieuChinh = (dish.nguyen_lieu_chinh || '')
-        .replace(/nước mắm[^,]*/gi, '')
-        .replace(/mắm cá[^,]*/gi, '');
+function isIngredientMatch(dishIngName, userIngName) {
+    if (!dishIngName || !userIngName) return false;
+    const dishKeys = getCanonicalKeys(dishIngName);
+    const userKeys = getCanonicalKeys(userIngName);
 
-    const parts = [
-        dish.ten_mon || '',
-        cleanNgLieuChinh,
-        ingNames,
-        dish.loai_mon || '',
-        typeof dish.tags === 'string' ? dish.tags : JSON.stringify(dish.tags || '')
-    ];
-    return parts.join(' ').toLowerCase();
-}
-
-/**
- * Kiểm tra xem 1 món ăn có chứa nguyên liệu này không
- */
-function matchDishWithIngredient(dish, ingredientName) {
-    const keys = getIngredientSearchKeys(ingredientName);
-    if (keys.length === 0) return false;
-    const corpus = getDishSearchCorpus(dish);
-    return keys.some(k => containsWholePhrase(corpus, k));
+    return dishKeys.some(dk => userKeys.includes(dk));
 }
 
 /**
@@ -191,27 +373,50 @@ function analyzeDishMatch(dish, targetIngNames = []) {
         })).filter(i => i.ten.length > 0);
     }
 
-    // 2. So khớp từng nguyên liệu
+    // 2. Phân loại nguyên liệu người dùng chọn: Nguyên liệu chính (Core) vs Gia vị (Seasoning)
+    const userCoreList = [];
+    const userSeasoningList = [];
+
+    for (const u of targetIngNames) {
+        const uKeys = getCanonicalKeys(u);
+        const isSeasoning = uKeys.some(k => SEASONING_CANONICALS.has(k));
+        if (isSeasoning) {
+            userSeasoningList.push(u);
+        } else {
+            userCoreList.push(u);
+        }
+    }
+
+    // 3. So khớp từng nguyên liệu trong món ăn
     const matchedUserIngs = new Set();
     const matchedDishIngs = [];
     const missingDishIngs = [];
 
-    // Các gia vị cơ bản thường có sẵn trong bếp (nước mắm, muối, đường, dầu ăn, bột ngọt...)
+    const matchedCoreUserIngs = new Set();
+    const matchedSeasoningUserIngs = new Set();
+
     const basicPantryRegex = /^(muối|đường|nước mắm|dầu ăn|tiêu|hạt nêm|bột ngọt|nước lọc|tỏi|hành tím)$/i;
 
     for (const dIng of dishIngredients) {
         let isMatched = false;
+
         for (const userIng of targetIngNames) {
-            const keys = getIngredientSearchKeys(userIng);
-            if (keys.some(k => containsWholePhrase(dIng.ten, k))) {
+            if (isIngredientMatch(dIng.ten, userIng)) {
                 isMatched = true;
                 matchedUserIngs.add(userIng);
                 matchedDishIngs.push(dIng.ten);
+
+                const uKeys = getCanonicalKeys(userIng);
+                if (uKeys.some(k => SEASONING_CANONICALS.has(k))) {
+                    matchedSeasoningUserIngs.add(userIng);
+                } else {
+                    matchedCoreUserIngs.add(userIng);
+                }
                 break;
             }
         }
+
         if (!isMatched) {
-            // Chỉ thêm vào danh sách cần mua nếu không phải gia vị bếp cơ bản
             const isBasic = basicPantryRegex.test(dIng.ten.trim());
             missingDishIngs.push({
                 ...dIng,
@@ -220,31 +425,41 @@ function analyzeDishMatch(dish, targetIngNames = []) {
         }
     }
 
-    // 3. Tính toán điểm số & phần trăm khớp
+    // 4. Tính toán điểm số & phần trăm khớp
     const matchScore = matchedUserIngs.size;
     const totalUserIngs = Math.max(1, targetIngNames.length);
     const nonBasicMissing = missingDishIngs.filter(i => !i.isBasicPantry);
 
+    // Xác định xem món ăn có thực sự khớp nguyên liệu cốt lõi hay không
+    let isCoreMatched = false;
+    if (userCoreList.length > 0) {
+        isCoreMatched = matchedCoreUserIngs.size > 0;
+    } else {
+        isCoreMatched = matchScore > 0;
+    }
+
     let matchPercentage = 0;
     if (matchScore > 0) {
         if (targetIngNames.length >= 2) {
-            // Nếu người dùng chọn nhiều nguyên liệu: tỷ lệ % dựa trên số nguyên liệu của họ được dùng
             const userRatio = matchScore / totalUserIngs;
             const dishCoverage = matchedDishIngs.length / Math.max(1, dishIngredients.length);
-            matchPercentage = Math.min(100, Math.round((userRatio * 0.7 + dishCoverage * 0.3) * 100));
+            const basePct = Math.round((userRatio * 0.7 + dishCoverage * 0.3) * 100);
+            matchPercentage = isCoreMatched ? Math.min(100, Math.max(60, basePct)) : Math.min(45, basePct);
         } else {
-            // Nếu người dùng chỉ chọn 1 nguyên liệu: tính theo độ sẵn có của món (cần mua ít đồ nhất = % cao nhất)
-            matchPercentage = Math.max(50, 100 - nonBasicMissing.length * 15);
+            matchPercentage = isCoreMatched ? Math.max(60, 100 - nonBasicMissing.length * 10) : 40;
         }
     }
 
     return {
         matchScore,
+        isCoreMatched,
         matchPercentage,
         matchedIngredients: [...matchedUserIngs],
         matchedDishIngredients: matchedDishIngs,
         missingIngredients: missingDishIngs,
-        missingCount: nonBasicMissing.length
+        missingCount: nonBasicMissing.length,
+        matchedCoreCount: matchedCoreUserIngs.size,
+        matchedSeasoningCount: matchedSeasoningUserIngs.size
     };
 }
 
@@ -256,7 +471,7 @@ function filterAndAnalyzeDishes(dishes, targetIngNames = [], mode = 'ingredients
     if (!Array.isArray(targetIngNames) || targetIngNames.length === 0) {
         return dishes.map(d => ({
             ...d,
-            analysis: { matchScore: 0, matchPercentage: 0, matchedIngredients: [], missingIngredients: [], missingCount: 0 }
+            analysis: { matchScore: 0, isCoreMatched: false, matchPercentage: 0, matchedIngredients: [], missingIngredients: [], missingCount: 0 }
         }));
     }
 
@@ -272,27 +487,21 @@ function filterAndAnalyzeDishes(dishes, targetIngNames = [], mode = 'ingredients
         }
     }
 
-    // Xếp hạng theo chế độ
-    if (targetIngNames.length === 1 || mode === 'few_ingredients') {
-        // Chế độ 2 (Ít nguyên liệu): Ưu tiên món CẦN MUA THÊM ÍT NGUYÊN LIỆU NHẤT
-        analyzed.sort((a, b) => {
-            if (a.analysis.missingCount !== b.analysis.missingCount) {
-                return a.analysis.missingCount - b.analysis.missingCount;
-            }
+    // Xếp hạng: Ưu tiên món khớp Nguyên liệu cốt lõi (Core) lên đầu
+    analyzed.sort((a, b) => {
+        const aCore = a.analysis?.isCoreMatched ? 1 : 0;
+        const bCore = b.analysis?.isCoreMatched ? 1 : 0;
+        if (aCore !== bCore) {
+            return bCore - aCore;
+        }
+        if (b.analysis.matchScore !== a.analysis.matchScore) {
+            return b.analysis.matchScore - a.analysis.matchScore;
+        }
+        if (b.analysis.matchPercentage !== a.analysis.matchPercentage) {
             return b.analysis.matchPercentage - a.analysis.matchPercentage;
-        });
-    } else {
-        // Chế độ 1 (Nhiều nguyên liệu): Ưu tiên món KHỚP NHIỀU NGUYÊN LIỆU CÓ SẴN NHẤT
-        analyzed.sort((a, b) => {
-            if (b.analysis.matchScore !== a.analysis.matchScore) {
-                return b.analysis.matchScore - a.analysis.matchScore;
-            }
-            if (b.analysis.matchPercentage !== a.analysis.matchPercentage) {
-                return b.analysis.matchPercentage - a.analysis.matchPercentage;
-            }
-            return a.analysis.missingCount - b.analysis.missingCount;
-        });
-    }
+        }
+        return a.analysis.missingCount - b.analysis.missingCount;
+    });
 
     return analyzed;
 }
@@ -305,7 +514,6 @@ function filterDishesByPreferences(dishes, preferences = {}) {
     const { categories, difficulty, maxTime, taste } = preferences;
 
     return dishes.filter(dish => {
-        // 1. Lọc theo danh mục món
         if (Array.isArray(categories) && categories.length > 0) {
             const loai = (dish.loai_mon || '').toLowerCase();
             const ten = (dish.ten_mon || '').toLowerCase();
@@ -316,19 +524,16 @@ function filterDishesByPreferences(dishes, preferences = {}) {
             if (!matchCat) return false;
         }
 
-        // 2. Lọc theo độ khó
         if (difficulty && difficulty !== 'all') {
             if (dish.do_kho !== difficulty) return false;
         }
 
-        // 3. Lọc theo thời gian nấu
         if (maxTime && maxTime !== 'all') {
             const totalTime = (Number(dish.thoi_gian_chuan_bi) || 10) + (Number(dish.thoi_gian_nau) || 15);
             const limit = Number(maxTime);
             if (!isNaN(limit) && totalTime > limit) return false;
         }
 
-        // 4. Lọc theo khẩu vị / tags
         if (Array.isArray(taste) && taste.length > 0) {
             const parseJSON = (v, fb) => { if (!v) return fb; if (typeof v === 'object') return v; try { return JSON.parse(v); } catch (e) { return fb; } };
             const tags = parseJSON(dish.tags, []);
@@ -342,22 +547,18 @@ function filterDishesByPreferences(dishes, preferences = {}) {
     });
 }
 
-/**
- * Lọc và xếp hạng danh sách món ăn theo các nguyên liệu được chọn (Tương thích ngược)
- */
 function filterAndRankDishes(dishes, ingredientNames) {
     return filterAndAnalyzeDishes(dishes, ingredientNames);
 }
 
 module.exports = {
-    CULINARY_SYNONYMS,
-    getIngredientSearchKeys,
-    getDishSearchCorpus,
-    containsWholePhrase,
-    matchDishWithIngredient,
+    makeVnRegex,
+    INGREDIENT_CANONICAL_RULES,
+    SEASONING_CANONICALS,
+    getCanonicalKeys,
+    isIngredientMatch,
     analyzeDishMatch,
     filterAndAnalyzeDishes,
     filterDishesByPreferences,
     filterAndRankDishes
 };
-
